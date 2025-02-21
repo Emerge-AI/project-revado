@@ -1,134 +1,8 @@
 import React, { useState } from 'react';
-import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaRobot, FaCheck } from 'react-icons/fa';
-
-const mockData = [
-    {
-        id: 1,
-        denialId: 'DNL-0456',
-        priority: 'high',
-        patient: { name: 'John Doe', mrn: '12345' },
-        serviceDate: '2024-02-15',
-        denialDate: '2024-03-01',
-        payer: 'UnitedHealthcare',
-        denialReason: 'CO-22: Missing modifier',
-        amount: 1200,
-        daysLeft: 5,
-        status: 'Drafting Appeal',
-        linkedAppealId: 'APL-1001'
-    },
-    {
-        id: 2,
-        denialId: 'DNL-0789',
-        priority: 'high',
-        patient: { name: 'John Doe', mrn: '12345' },
-        serviceDate: '2024-02-16',
-        denialDate: '2024-03-02',
-        payer: 'UnitedHealthcare',
-        denialReason: 'CO-16: Claim lacks information',
-        amount: 2500,
-        daysLeft: 4,
-        status: 'Under Review',
-        linkedAppealId: 'APL-1002'
-    },
-    {
-        id: 3,
-        denialId: 'DNL-0234',
-        priority: 'medium',
-        patient: { name: 'Sarah Johnson', mrn: '12346' },
-        serviceDate: '2024-02-10',
-        denialDate: '2024-02-25',
-        payer: 'Aetna',
-        denialReason: 'CO-50: Non-covered service',
-        amount: 3500,
-        daysLeft: 8,
-        status: 'Appeal Ready',
-        linkedAppealId: null
-    },
-    {
-        id: 4,
-        priority: 'high',
-        patient: { name: 'Sarah Johnson', mrn: '12346' },
-        serviceDate: '2024-02-12',
-        denialDate: '2024-02-28',
-        payer: 'Aetna',
-        denialReason: 'CO-97: Payment adjusted',
-        amount: 1800,
-        daysLeft: 6,
-        status: 'Documentation Pending'
-    },
-    {
-        id: 5,
-        priority: 'low',
-        patient: { name: 'Sarah Johnson', mrn: '12346' },
-        serviceDate: '2024-02-14',
-        denialDate: '2024-03-01',
-        payer: 'Aetna',
-        denialReason: 'CO-18: Duplicate claim',
-        amount: 950,
-        daysLeft: 12,
-        status: 'New'
-    },
-    {
-        id: 6,
-        priority: 'high',
-        patient: { name: 'Robert Smith', mrn: '12347' },
-        serviceDate: '2024-02-01',
-        denialDate: '2024-02-20',
-        payer: 'Cigna',
-        denialReason: 'CO-11: Diagnosis inconsistent',
-        amount: 4200,
-        daysLeft: 3,
-        status: 'Clinical Review'
-    },
-    {
-        id: 7,
-        priority: 'medium',
-        patient: { name: 'Emily Davis', mrn: '12348' },
-        serviceDate: '2024-02-05',
-        denialDate: '2024-02-22',
-        payer: 'Blue Cross',
-        denialReason: 'CO-29: Time limit expired',
-        amount: 800,
-        daysLeft: 15,
-        status: 'New'
-    },
-    {
-        id: 8,
-        priority: 'high',
-        patient: { name: 'Emily Davis', mrn: '12348' },
-        serviceDate: '2024-02-08',
-        denialDate: '2024-02-24',
-        payer: 'Blue Cross',
-        denialReason: 'CO-96: Non-covered charges',
-        amount: 2200,
-        daysLeft: 2,
-        status: 'Urgent Review'
-    },
-    {
-        id: 9,
-        priority: 'medium',
-        patient: { name: 'Michael Wilson', mrn: '12349' },
-        serviceDate: '2024-02-03',
-        denialDate: '2024-02-21',
-        payer: 'Humana',
-        denialReason: 'CO-251: Medical records missing',
-        amount: 3200,
-        daysLeft: 7,
-        status: 'Gathering Records'
-    },
-    {
-        id: 10,
-        priority: 'high',
-        patient: { name: 'Michael Wilson', mrn: '12349' },
-        serviceDate: '2024-02-16',
-        denialDate: '2024-03-01',
-        payer: 'Medicare',
-        denialReason: 'CO-197: Precertification absent',
-        amount: 2800,
-        daysLeft: 4,
-        status: 'Pending Provider'
-    }
-];
+import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaRobot, FaCheck, FaTimes, FaClock, FaHistory } from 'react-icons/fa';
+import DenialDetailsSidebar from './DenialDetailsSidebar';
+import { AppealDetailsSidebar } from './AppealsInProgress';
+import { denialMockData, appealMockData } from '../mockData';
 
 const PriorityBadge = ({ priority }) => {
     const colors = {
@@ -152,8 +26,12 @@ const PriorityBadge = ({ priority }) => {
 
 const ActiveDenials = () => {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
-    const [data, setData] = useState(mockData);
+    const [data, setData] = useState(denialMockData);
     const [selectedDenials, setSelectedDenials] = useState(new Set());
+    const [selectedDenial, setSelectedDenial] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [selectedAppeal, setSelectedAppeal] = useState(null);
+    const [isAppealSidebarOpen, setIsAppealSidebarOpen] = useState(false);
 
     const handleSort = (key) => {
         let direction = 'asc';
@@ -229,6 +107,21 @@ const ActiveDenials = () => {
     const isAllSelected = data.length > 0 && selectedDenials.size === data.length;
     const hasSelections = selectedDenials.size > 0;
 
+    const handleDenialClick = (denial) => {
+        setSelectedDenial(denial);
+        setIsSidebarOpen(true);
+        setIsAppealSidebarOpen(false);
+    };
+
+    const handleAppealClick = (appealId) => {
+        const appeal = appealMockData.find(a => a.id === appealId);
+        if (appeal) {
+            setSelectedAppeal(appeal);
+            setIsAppealSidebarOpen(true);
+            setIsSidebarOpen(false);
+        }
+    };
+
     return (
         <div className="p-6 relative">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Active Denials</h1>
@@ -247,6 +140,13 @@ const ActiveDenials = () => {
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
+                                onClick={() => handleSort('priority')}>
+                                <div className="flex items-center space-x-1">
+                                    <span>Priority</span>
+                                    {getSortIcon('priority')}
+                                </div>
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('denialId')}>
                                 <div className="flex items-center space-x-1">
                                     <span>Denial ID</span>
@@ -256,13 +156,6 @@ const ActiveDenials = () => {
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 <div className="flex items-center">
                                     <span>Linked Appeal</span>
-                                </div>
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
-                                onClick={() => handleSort('priority')}>
-                                <div className="flex items-center space-x-1">
-                                    <span>Priority</span>
-                                    {getSortIcon('priority')}
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
@@ -335,20 +228,30 @@ const ActiveDenials = () => {
                                         />
                                     </div>
                                 </td>
+                                <td className="px-6 py-4">
+                                    <PriorityBadge priority={denial.priority} />
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-700">
-                                    <a href="#" className="hover:text-indigo-900">{denial.denialId}</a>
+                                    <button
+                                        onClick={() => handleDenialClick(denial)}
+                                        className="hover:text-indigo-900"
+                                    >
+                                        {denial.denialId}
+                                    </button>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     {denial.linkedAppealId ? (
-                                        <a href="#" className="text-indigo-700 hover:text-indigo-900">{denial.linkedAppealId}</a>
+                                        <button
+                                            onClick={() => handleAppealClick(denial.linkedAppealId)}
+                                            className="text-indigo-700 hover:text-indigo-900"
+                                        >
+                                            {denial.linkedAppealId}
+                                        </button>
                                     ) : (
                                         <span className="text-gray-500">No appeal linked</span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4">
-                                    <PriorityBadge priority={denial.priority} />
-                                </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <div className="text-sm">
                                         <a href="#" className="font-medium text-indigo-700 hover:text-indigo-900">{denial.patient.name}</a>
                                     </div>
@@ -428,12 +331,26 @@ const ActiveDenials = () => {
                 <button
                     className="bg-indigo-600 text-white px-6 py-2 rounded-full shadow-lg hover:bg-indigo-700 
                              flex items-center space-x-2 transition-colors duration-150"
-                    onClick={() => console.log('Batch AI Edit', Array.from(selectedDenials))}
+                    onClick={() => console.log('Batch AI Appeal', Array.from(selectedDenials))}
                 >
                     <FaRobot className="text-lg" />
-                    <span className="font-medium">AI Edit {selectedDenials.size} Denial{selectedDenials.size > 1 ? 's' : ''}</span>
+                    <span className="font-medium">AI Appeal {selectedDenials.size} Denial{selectedDenials.size > 1 ? 's' : ''}</span>
                 </button>
             </div>
+
+            {/* Denial Details Sidebar */}
+            <DenialDetailsSidebar
+                denial={selectedDenial}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+            />
+
+            {/* Appeal Details Sidebar */}
+            <AppealDetailsSidebar
+                appeal={selectedAppeal}
+                isOpen={isAppealSidebarOpen}
+                onClose={() => setIsAppealSidebarOpen(false)}
+            />
         </div>
     );
 };

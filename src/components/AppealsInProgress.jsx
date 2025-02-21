@@ -1,44 +1,8 @@
 import React, { useState } from 'react';
-import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaFile, FaImage, FaExclamationTriangle, FaCheck, FaTimes, FaHistory, FaComments, FaClock } from 'react-icons/fa';
-
-const mockData = [
-    {
-        id: 'APL-1001',
-        linkedDenialId: 'DNL-0456',
-        status: { main: 'Under Review', sub: 'Awaiting payer response' },
-        assignedTo: { name: 'Dr. Smith', role: 'Coder' },
-        submittedDate: '2024-02-15',
-        expectedResponseDate: '2024-03-15',
-        daysLeft: 5,
-        appealReason: 'CO-22: Missing modifier 25',
-        payer: 'Medicare',
-        amountAppealed: 1500,
-        daysSinceSubmission: 12,
-        actionsNeeded: 'Attach clinical notes',
-        outcome: { status: 'Pending', recoveredAmount: null },
-        supportingDocs: ['Appeal Letter', 'Operative Report'],
-        successProbability: 75,
-        escalationLevel: 1
-    },
-    {
-        id: 'APL-1002',
-        linkedDenialId: 'DNL-0789',
-        status: { main: 'Draft', sub: 'Initial review' },
-        assignedTo: { name: 'John Doe', role: 'Billing' },
-        submittedDate: '2024-02-25',
-        expectedResponseDate: '2024-03-30',
-        daysLeft: 15,
-        appealReason: 'CO-109: Missing documentation',
-        payer: 'Aetna',
-        amountAppealed: 2000,
-        daysSinceSubmission: 5,
-        actionsNeeded: 'Add prior auth proof',
-        outcome: { status: 'Pending', recoveredAmount: null },
-        supportingDocs: ['Template'],
-        successProbability: 65,
-        escalationLevel: 1
-    }
-];
+import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaFile, FaImage, FaExclamationTriangle, FaCheck, FaTimes, FaHistory, FaComments, FaClock, FaRobot } from 'react-icons/fa';
+import DenialDetailsSidebar from './DenialDetailsSidebar';
+import { denialMockData, appealMockData } from '../mockData';
+import AIEnhanceSidebar from './AIEnhanceSidebar';
 
 const StatusBadge = ({ status }) => {
     const colors = {
@@ -86,7 +50,7 @@ const ProgressBar = ({ current, total }) => {
     );
 };
 
-const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
+export const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
     if (!appeal) return null;
 
     const auditTrail = [
@@ -103,7 +67,7 @@ const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
     ];
 
     return (
-        <div className={`fixed inset-y-0 right-0 w-96 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`fixed inset-y-0 right-0 w-96 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-50 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
             {/* Header */}
             <div className="px-6 py-4 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-900">Appeal Details</h2>
@@ -166,8 +130,8 @@ const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
                             <label className="text-sm font-medium text-gray-500">Success Probability</label>
                             <div className="flex items-center">
                                 <span className={`text-sm font-medium ${appeal.successProbability >= 70 ? 'text-green-700' :
-                                        appeal.successProbability >= 40 ? 'text-yellow-700' :
-                                            'text-red-700'
+                                    appeal.successProbability >= 40 ? 'text-yellow-700' :
+                                        'text-red-700'
                                     }`}>
                                     {appeal.successProbability}%
                                 </span>
@@ -227,9 +191,13 @@ const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
 
 const AppealsInProgress = () => {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
-    const [data, setData] = useState(mockData);
+    const [data, setData] = useState(appealMockData);
+    const [selectedAppeals, setSelectedAppeals] = useState(new Set());
     const [selectedAppeal, setSelectedAppeal] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [selectedDenial, setSelectedDenial] = useState(null);
+    const [isDenialSidebarOpen, setIsDenialSidebarOpen] = useState(false);
+    const [isAIEnhanceSidebarOpen, setIsAIEnhanceSidebarOpen] = useState(false);
 
     const handleSort = (key) => {
         let direction = 'asc';
@@ -256,15 +224,56 @@ const AppealsInProgress = () => {
     const handleAppealClick = (appeal) => {
         setSelectedAppeal(appeal);
         setIsSidebarOpen(true);
+        setIsDenialSidebarOpen(false);
     };
 
+    const handleDenialClick = (denialId) => {
+        const denial = denialMockData.find(d => d.denialId === denialId);
+        if (denial) {
+            setSelectedDenial(denial);
+            setIsDenialSidebarOpen(true);
+            setIsSidebarOpen(false);
+        }
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedAppeals(new Set(data.map(appeal => appeal.id)));
+        } else {
+            setSelectedAppeals(new Set());
+        }
+    };
+
+    const handleSelectAppeal = (id) => {
+        const newSelected = new Set(selectedAppeals);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedAppeals(newSelected);
+    };
+
+    const isAllSelected = data.length > 0 && selectedAppeals.size === data.length;
+    const hasSelections = selectedAppeals.size > 0;
+
     return (
-        <div className="p-6">
+        <div className="p-6 relative">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Appeals in Progress</h1>
             <div className="overflow-x-auto bg-gray-100 rounded-lg shadow">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-200">
                         <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                                        checked={isAllSelected}
+                                        onChange={handleSelectAll}
+                                    />
+                                </div>
+                            </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('id')}>
                                 <div className="flex items-center space-x-1">
@@ -335,7 +344,17 @@ const AppealsInProgress = () => {
                     </thead>
                     <tbody className="bg-gray-100 divide-y divide-gray-200">
                         {data.map((appeal) => (
-                            <tr key={appeal.id} className="hover:bg-gray-200 transition-colors duration-150">
+                            <tr key={appeal.id} className={`hover:bg-gray-200 transition-colors duration-150 ${selectedAppeals.has(appeal.id) ? 'bg-indigo-50' : ''}`}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                                            checked={selectedAppeals.has(appeal.id)}
+                                            onChange={() => handleSelectAppeal(appeal.id)}
+                                        />
+                                    </div>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-700">
                                     <button
                                         onClick={() => handleAppealClick(appeal)}
@@ -345,7 +364,12 @@ const AppealsInProgress = () => {
                                     </button>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    <a href="#" className="text-indigo-700 hover:text-indigo-900">{appeal.linkedDenialId}</a>
+                                    <button
+                                        onClick={() => handleDenialClick(appeal.linkedDenialId)}
+                                        className="text-indigo-700 hover:text-indigo-900"
+                                    >
+                                        {appeal.linkedDenialId}
+                                    </button>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <StatusBadge status={appeal.status} />
@@ -414,11 +438,44 @@ const AppealsInProgress = () => {
                 </table>
             </div>
 
+            {/* Top Action Bar */}
+            <div className={`fixed top-4 ml-64 left-4 flex items-center space-x-3 transition-all duration-300 transform ${hasSelections ? 'translate-y-0 opacity-100' : '-translate-y-16 opacity-0'}`}>
+                {/* Selection Count Badge */}
+                <div className="bg-gray-700 text-white px-4 py-2 rounded-full shadow-md flex items-center space-x-2">
+                    <FaCheck className="text-sm" />
+                    <span>{selectedAppeals.size} selected</span>
+                </div>
+
+                {/* AI Enhance Button */}
+                <button
+                    className="bg-indigo-600 text-white px-6 py-2 rounded-full shadow-lg hover:bg-indigo-700 
+                             flex items-center space-x-2 transition-colors duration-150"
+                    onClick={() => setIsAIEnhanceSidebarOpen(true)}
+                >
+                    <FaRobot className="text-lg" />
+                    <span className="font-medium">AI Enhance {selectedAppeals.size} Appeal{selectedAppeals.size > 1 ? 's' : ''}</span>
+                </button>
+            </div>
+
             {/* Appeal Details Sidebar */}
             <AppealDetailsSidebar
                 appeal={selectedAppeal}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
+            />
+
+            {/* Denial Details Sidebar */}
+            <DenialDetailsSidebar
+                denial={selectedDenial}
+                isOpen={isDenialSidebarOpen}
+                onClose={() => setIsDenialSidebarOpen(false)}
+            />
+
+            {/* AI Enhancement Sidebar */}
+            <AIEnhanceSidebar
+                isOpen={isAIEnhanceSidebarOpen}
+                onClose={() => setIsAIEnhanceSidebarOpen(false)}
+                selectedAppeals={selectedAppeals}
             />
         </div>
     );

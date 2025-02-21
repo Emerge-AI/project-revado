@@ -114,7 +114,7 @@ const Sidebar = ({ isMobile, isOpen, onClose }) => {
         >
             {/* Logo Section */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <h1 className="text-xl font-bold text-gray-800 dark:text-white">DenialManagement</h1>
+                <h1 className="text-xl font-bold text-gray-800 dark:text-white">Revado</h1>
             </div>
 
             {/* Search Bar */}
