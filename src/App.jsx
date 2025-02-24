@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Sidebar from './components/Sidebar'
 import ActiveDenials from './components/ActiveDenials'
 import AppealsInProgress from './components/AppealsInProgress'
+import DenialOverview from './components/DenialOverview'
 import './App.css'
 
 // Placeholder component for routes
@@ -72,7 +73,7 @@ function App() {
           {/* Routes */}
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<PageContent title="Denial Overview" />} />
+            <Route path="/dashboard" element={<DenialOverview />} />
             <Route path="/active-denials" element={<ActiveDenials />} />
             <Route path="/appeals" element={<AppealsInProgress />} />
             <Route path="/new-appeal" element={<PageContent title="New Appeal" />} />
