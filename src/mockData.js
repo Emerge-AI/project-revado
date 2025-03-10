@@ -11,7 +11,8 @@ export const denialMockData = [
         amount: 1200,
         daysLeft: 5,
         status: 'Drafting Appeal',
-        linkedAppealId: 'APL-1001'
+        linkedAppealId: 'APL-1001',
+        notes: ""
     },
     {
         id: 2,
@@ -25,7 +26,8 @@ export const denialMockData = [
         amount: 2500,
         daysLeft: 4,
         status: 'Under Review',
-        linkedAppealId: 'APL-1002'
+        linkedAppealId: 'APL-1002',
+        notes: ""
     },
     {
         id: 3,
@@ -39,7 +41,8 @@ export const denialMockData = [
         amount: 3500,
         daysLeft: 8,
         status: 'Appeal Ready',
-        linkedAppealId: null
+        linkedAppealId: null,
+        notes: ""
     },
     {
         id: 4,
@@ -53,7 +56,8 @@ export const denialMockData = [
         amount: 1800,
         daysLeft: 6,
         status: 'Documentation Pending',
-        linkedAppealId: 'APL-1003'
+        linkedAppealId: 'APL-1003',
+        notes: ""
     },
     {
         id: 5,
@@ -67,7 +71,8 @@ export const denialMockData = [
         amount: 950,
         daysLeft: 12,
         status: 'New',
-        linkedAppealId: null
+        linkedAppealId: null,
+        notes: ""
     },
     {
         id: 6,
@@ -81,7 +86,8 @@ export const denialMockData = [
         amount: 4200,
         daysLeft: 3,
         status: 'Clinical Review',
-        linkedAppealId: 'APL-1004'
+        linkedAppealId: 'APL-1004',
+        notes: ""
     },
     {
         id: 7,
@@ -95,7 +101,8 @@ export const denialMockData = [
         amount: 800,
         daysLeft: 15,
         status: 'New',
-        linkedAppealId: null
+        linkedAppealId: null,
+        notes: ""
     },
     {
         id: 8,
@@ -109,7 +116,8 @@ export const denialMockData = [
         amount: 2200,
         daysLeft: 2,
         status: 'Urgent Review',
-        linkedAppealId: 'APL-1005'
+        linkedAppealId: 'APL-1005',
+        notes: ""
     },
     {
         id: 9,
@@ -123,7 +131,8 @@ export const denialMockData = [
         amount: 3200,
         daysLeft: 7,
         status: 'Gathering Records',
-        linkedAppealId: 'APL-1006'
+        linkedAppealId: 'APL-1006',
+        notes: ""
     },
     {
         id: 10,
@@ -137,7 +146,8 @@ export const denialMockData = [
         amount: 2800,
         daysLeft: 4,
         status: 'Pending Provider',
-        linkedAppealId: 'APL-1007'
+        linkedAppealId: 'APL-1007',
+        notes: ""
     }
 ];
 
@@ -158,7 +168,8 @@ export const appealMockData = [
         outcome: { status: 'Pending', recoveredAmount: null },
         supportingDocs: ['Appeal Letter', 'Operative Report'],
         successProbability: 75,
-        escalationLevel: 1
+        escalationLevel: 1,
+        notes: ""
     },
     {
         id: 'APL-1002',
@@ -176,7 +187,8 @@ export const appealMockData = [
         outcome: { status: 'Pending', recoveredAmount: null },
         supportingDocs: ['Template'],
         successProbability: 65,
-        escalationLevel: 1
+        escalationLevel: 1,
+        notes: ""
     },
     {
         id: 'APL-1003',
@@ -194,7 +206,8 @@ export const appealMockData = [
         outcome: { status: 'Pending', recoveredAmount: null },
         supportingDocs: ['Medical Records', 'Appeal Letter'],
         successProbability: 82,
-        escalationLevel: 1
+        escalationLevel: 1,
+        notes: ""
     },
     {
         id: 'APL-1004',
@@ -212,7 +225,8 @@ export const appealMockData = [
         outcome: { status: 'Won', recoveredAmount: 3500 },
         supportingDocs: ['Appeal Letter', 'Clinical Notes', 'Approval Notice'],
         successProbability: 100,
-        escalationLevel: 1
+        escalationLevel: 1,
+        notes: ""
     },
     {
         id: 'APL-1005',
@@ -230,7 +244,8 @@ export const appealMockData = [
         outcome: { status: 'Pending', recoveredAmount: null },
         supportingDocs: ['Appeal Letter', 'Policy Documentation'],
         successProbability: 70,
-        escalationLevel: 2
+        escalationLevel: 2,
+        notes: ""
     },
     {
         id: 'APL-1006',
@@ -248,7 +263,8 @@ export const appealMockData = [
         outcome: { status: 'Lost', recoveredAmount: 0 },
         supportingDocs: ['Appeal Letter', 'Denial Notice'],
         successProbability: 35,
-        escalationLevel: 2
+        escalationLevel: 2,
+        notes: ""
     },
     {
         id: 'APL-1007',
@@ -266,6 +282,7 @@ export const appealMockData = [
         outcome: { status: 'Pending', recoveredAmount: null },
         supportingDocs: ['Appeal Letter', 'Prior Auth Documentation'],
         successProbability: 60,
-        escalationLevel: 1
+        escalationLevel: 1,
+        notes: ""
     }
 ]; 
