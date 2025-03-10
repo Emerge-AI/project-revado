@@ -21,7 +21,7 @@ const PriorityBadge = ({ priority }) => {
     );
 };
 
-const DenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
+const DenialDetailsSidebar = ({ denial, isOpen, onClose, handleAppealClick }) => {
     if (!denial) return null;
 
     const auditTrail = [
@@ -78,7 +78,7 @@ const DenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
                             <label className="text-sm font-medium text-gray-500">Linked Appeal</label>
                             <p className="text-sm">
                                 {denial.linkedAppealId ? (
-                                    <a href="#" className="text-indigo-700 hover:text-indigo-900">{denial.linkedAppealId}</a>
+                                    <a href="#" onClick={handleAppealClick} className="text-indigo-700 hover:text-indigo-900">{denial.linkedAppealId}</a>
                                 ) : (
                                     <span className="text-gray-500">No appeal linked</span>
                                 )}

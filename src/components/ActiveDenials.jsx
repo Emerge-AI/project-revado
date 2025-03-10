@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaRobot, FaCheck, FaTimes, FaClock, FaHistory } from 'react-icons/fa';
 import DenialDetailsSidebar from './DenialDetailsSidebar';
 import { AppealDetailsSidebar } from './AppealsInProgress';
+import NotesSideBar from './NotesSideBar';
 import { denialMockData, appealMockData } from '../mockData';
 
 const PriorityBadge = ({ priority }) => {
@@ -32,6 +33,7 @@ const ActiveDenials = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedAppeal, setSelectedAppeal] = useState(null);
     const [isAppealSidebarOpen, setIsAppealSidebarOpen] = useState(false);
+    
 
     const handleSort = (key) => {
         let direction = 'asc';
@@ -107,6 +109,13 @@ const ActiveDenials = () => {
     const isAllSelected = data.length > 0 && selectedDenials.size === data.length;
     const hasSelections = selectedDenials.size > 0;
 
+    const handleNotesClick = (denial) => {
+        setSelectedDenial(denial);
+        setIsNotesSidebarOpen(true);
+        setIsAppealSidebarOpen(false);
+        setIsSidebarOpen(false);
+    };
+    
     const handleDenialClick = (denial) => {
         setSelectedDenial(denial);
         setIsSidebarOpen(true);
@@ -114,6 +123,7 @@ const ActiveDenials = () => {
     };
 
     const handleAppealClick = (appealId) => {
+        console.log(appealId)
         const appeal = appealMockData.find(a => a.id === appealId);
         if (appeal) {
             setSelectedAppeal(appeal);
@@ -343,6 +353,7 @@ const ActiveDenials = () => {
                 denial={selectedDenial}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
+                handleAppealClick={() => handleAppealClick(selectedDenial.linkedAppealId)}
             />
 
             {/* Appeal Details Sidebar */}
@@ -350,6 +361,7 @@ const ActiveDenials = () => {
                 appeal={selectedAppeal}
                 isOpen={isAppealSidebarOpen}
                 onClose={() => setIsAppealSidebarOpen(false)}
+                handleDenialClick={() => handleDenialClick(selectedDenial)}
             />
         </div>
     );
