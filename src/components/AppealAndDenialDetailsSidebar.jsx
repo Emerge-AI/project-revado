@@ -1,6 +1,6 @@
-import React from 'react';
-import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt} from 'react-icons/fa';
-import { appealMockData } from '../mockData';
+import React, { useState, useEffect } from 'react';
+import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt, FaSave } from 'react-icons/fa';
+// import { appealMockData } from '../mockData';
 
 const PriorityBadge = ({ priority }) => {
     const colors = {
@@ -22,10 +22,45 @@ const PriorityBadge = ({ priority }) => {
     );
 };
 
-const AppealsAndDenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
+const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, updateNotes, updateStatus }) => {
+    const appeal = denial ? appealData.find(appeal => appeal.id === denial.linkedAppealId) : null;
+    const [notes, setNotes] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+    const [lastSaved, setLastSaved] = useState(null);
+    const [status, setStatus] = useState(appeal?.status?.main || ''); // Initialize status
+
+    // Update notes whenever the appeal changes
+    useEffect(() => {
+        if (appeal) {
+            setNotes(appeal.notes || ''); // Set notes from the appeal
+            setStatus(appeal.status?.main || ''); // Set status from the appeal
+        }
+    }, [appeal]); // Dependency array includes appeal
+
     if (!denial) return null;
 
-    const appeal = appealMockData.find(appeal => appeal.id === denial.linkedAppealId);
+    const sendEmail = (email) => {
+        window.location = "mailto:" + email;
+    }
+
+
+    const handleSaveNotes = () => {
+        // Call the updateNotes function passed from the parent
+        if (updateNotes && appeal) {
+            updateNotes(appeal.id, notes); // Pass the appeal ID and updated notes
+        }
+        console.log('Saving notes:', notes);
+        setIsEditing(false);
+        setLastSaved(new Date().toLocaleString());
+    };
+
+    const handleStatusChange = (e) => {
+        const newStatus = e.target.value;
+        setStatus(newStatus);
+        if (updateStatus && appeal) {
+            updateStatus(appeal.id, newStatus); // Pass the appeal ID and updated status
+        }
+    };
 
     return (
         <>
@@ -53,7 +88,7 @@ const AppealsAndDenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
                                 <div className="flex-1 p-2 overflow-y-auto">
                                     <div className="grid grid-cols-2 gap-2 h-full">
                                         {/* Left Column - Denial Details */}
-                                        <div className="space-y-1">
+                                        <div className="space-y-1">    
                                             {/* Basic Info Section */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Basic Information</h3>
@@ -169,6 +204,49 @@ const AppealsAndDenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
                                                     </a>
                                                 </div>
                                             </div>
+
+                                            {/* Notes Section */}
+                                            <div className="bg-white rounded-lg border border-gray-200 p-1.5">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <h3 className="text-sm font-medium text-gray-900">Notes</h3>
+                                                    <div className="flex items-center gap-2">
+                                                        {isEditing ? (
+                                                            <button
+                                                                onClick={handleSaveNotes}
+                                                                className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full hover:bg-green-700 flex items-center gap-1"
+                                                            >
+                                                                <FaSave className="text-xs" />
+                                                                Save
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => setIsEditing(true)}
+                                                                className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full hover:bg-blue-700 flex items-center gap-1"
+                                                            >
+                                                                <FaEdit className="text-xs" />
+                                                                Edit
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {isEditing ? (
+                                                    <textarea
+                                                        value={notes}
+                                                        onChange={(e) => setNotes(e.target.value)}
+                                                        className="w-full h-32 p-2 text-sm text-black border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                                        placeholder="Enter your notes here..."
+                                                    />
+                                                ) : (
+                                                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                                                        {notes || 'No notes available.'}
+                                                    </div>
+                                                )}
+                                                {lastSaved && (
+                                                    <div className="text-xs text-gray-500 mt-1">
+                                                        Last saved: {lastSaved}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
     
                                         {/* Right Column - Appeal Details */}
@@ -196,6 +274,16 @@ const AppealsAndDenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
                                                             <span className="px-2 text-xs text-gray-500">{appeal.status.sub}</span>
                                                         </div>
                                                     </div>
+                                                    <select
+                                                        value={status}
+                                                        onChange={handleStatusChange}
+                                                        className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                    >
+                                                        <option value="Draft">Draft</option>
+                                                        <option value="Under Review">Under Review</option>
+                                                        <option value="Lost">Lost</option>
+                                                        <option value="Won">Won</option>
+                                                    </select>
                                                 </div>
                                             </div>
     
@@ -361,14 +449,6 @@ const AppealsAndDenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
                                                     </div>
                                                 </div>
                                             </div>
-    
-                                            {/* Notes */}
-                                            <div className="bg-white rounded-lg border border-gray-200 p-1.5">
-                                                <div className="text-left">
-                                                    <label className="text-xs font-medium text-gray-500 block">Notes</label>
-                                                    <p className="text-xs text-gray-900">{appeal.notes}</p>
-                                                </div>
-                                            </div>
                                         </div>
                                         }
                                     </div>
@@ -406,7 +486,7 @@ const AppealsAndDenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
                                         {/* Contact Payer */}
                                         <button
                                             className="bg-teal-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-teal-700 flex items-center gap-1 text-xs transition-colors duration-150"
-                                            onClick={() => console.log('Contact Payer')}
+                                            onClick={() => sendEmail(denial.payerContact.email)}
                                         >
                                             <FaEnvelope className="text-xs" />
                                             <span>Contact Payer</span>
@@ -436,18 +516,6 @@ const AppealsAndDenialDetailsSidebar = ({ denial, isOpen, onClose }) => {
                                         >
                                             <FaSyncAlt className="text-xs" />
                                             <span>Sync EHR</span>
-                                        </button>
-                                        <button className="bg-blue-600 text-white px-2 py-0.5 rounded-full shadow-lg hover:bg-blue-700 flex items-center gap-1 text-xs transition-colors duration-150">
-                                            <FaSyncAlt className="text-xs" />
-                                            <span className="font-medium">Change Status</span>
-                                            </button>
-                                        {/* Add Note */}
-                                        <button
-                                            className="bg-indigo-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-indigo-700 flex items-center gap-1 text-xs transition-colors duration-150"
-                                            onClick={() => console.log('Add Note')}
-                                        >
-                                            <FaEdit className="text-xs" />
-                                            <span>Add Note</span>
                                         </button>
                                     </div>
                                 </div>

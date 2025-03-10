@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaRobot, FaCheck, FaTimes, FaClock, FaHistory } from 'react-icons/fa';
-import NotesSideBar from './NotesSideBar';
 import AppealsAndDenialDetailsSidebar from './AppealAndDenialDetailsSidebar';
 import AIEnhanceSidebar from './AIEnhanceSidebar';
 import { denialMockData, appealMockData } from '../mockData';
@@ -28,6 +27,7 @@ const PriorityBadge = ({ priority }) => {
 const ActiveDenials = () => {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
     const [data, setData] = useState(denialMockData);
+    const [appealData, setAppealData] = useState(appealMockData);
     const [selectedDenials, setSelectedDenials] = useState(new Set());
     const [selectedDenial, setSelectedDenial] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -110,22 +110,34 @@ const ActiveDenials = () => {
     const handleNotesClick = (denial) => {
         setSelectedDenial(denial);
         setIsNotesSidebarOpen(true);
-        setIsAppealSidebarOpen(false);
         setIsSidebarOpen(false);
     };
     
     const handleDenialClick = (denial) => {
         setSelectedDenial(denial);
         setIsSidebarOpen(true);
-        setIsAppealSidebarOpen(false);
     };
 
-    const handleAppealClick = (appealId) => {
-        console.log(appealId)
-        const appeal = appealMockData.find(a => a.id === appealId);
-        if (appeal) {
-            setSelectedAppeal(appeal);
-        }
+    const updateNotes = (appealId, newNotes) => {
+        var updatedAppeals = appealData.map(appeal => {
+            if (appeal.id === appealId) {
+                return { ...appeal, notes: newNotes }; // Update the notes for the specific appeal
+            }
+            return appeal;
+        });
+        // Update the mock data or state here as needed
+        // For example, if you have a state for appeals, you would set it here
+        setAppealData(updatedAppeals);
+    };
+
+    const updateStatus = (appealId, newStatus) => {
+        var updatedAppeals = appealData.map(appeal => {
+            if (appeal.id === appealId) {
+                return { ...appeal, status: { ...appeal.status, main: newStatus } }; // Update the status for the specific appeal
+            }
+            return appeal;
+        });
+        setAppealData(updatedAppeals);
     };
 
     return (
@@ -275,13 +287,13 @@ const ActiveDenials = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                        appealMockData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main === 'Lost' 
+                                        appealData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main === 'Lost' 
                                             ? 'bg-red-50 text-red-700'
-                                            : appealMockData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main === 'Won'
+                                            : appealData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main === 'Won'
                                                 ? 'bg-green-50 text-green-700'
                                                 : 'bg-blue-50 text-blue-700'
                                     }`}>
-                                        { appealMockData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main ?? denial.status }
+                                        { appealData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main ?? denial.status }
                                     </span>
                                 </td>
                             </tr>
@@ -337,8 +349,11 @@ const ActiveDenials = () => {
             {/* Denial Details Sidebar */}
             <AppealsAndDenialDetailsSidebar
                 denial={selectedDenial}
+                appealData={appealData}
                 isOpen={isSidebarOpen}
-                onClose={() => setIsSidebarOpen(false)}                
+                onClose={() => setIsSidebarOpen(false)}
+                updateNotes={updateNotes}
+                updateStatus={updateStatus}
             />
 
             {/* AI Enhancement Sidebar */}

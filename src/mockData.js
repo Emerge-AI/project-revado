@@ -353,7 +353,7 @@ export const denialMockData = [
     }
 ];
 
-export const appealMockData = [
+export var appealMockData = [
     {
         id: 'APL-1001',
         linkedDenialId: 'DNL-0456',
@@ -375,7 +375,7 @@ export const appealMockData = [
         potentialRecovery: 1200,
         costOfAppeal: 150,
         daysSinceSubmission: 12,
-        actionsNeeded: 'Attach clinical notes',
+        notes: 'Attach clinical notes',
         outcome: {
             status: 'Pending',
             recoveredAmount: null,
@@ -422,7 +422,7 @@ export const appealMockData = [
         potentialRecovery: 2500,
         costOfAppeal: 200,
         daysSinceSubmission: 5,
-        actionsNeeded: 'Add prior auth proof',
+        notes: 'Add prior auth proof',
         outcome: {
             status: 'Pending',
             recoveredAmount: null,
@@ -467,7 +467,7 @@ export const appealMockData = [
         potentialRecovery: 1800,
         costOfAppeal: 100,
         daysSinceSubmission: 10,
-        actionsNeeded: 'Review clinical documentation',
+        notes: 'Review clinical documentation',
         outcome: {
             status: 'Pending',
             recoveredAmount: null,
@@ -514,7 +514,7 @@ export const appealMockData = [
         potentialRecovery: 3500,
         costOfAppeal: 300,
         daysSinceSubmission: 20,
-        actionsNeeded: 'Process recovery',
+        notes: 'Process recovery',
         outcome: {
             status: 'Won',
             recoveredAmount: 3500,
@@ -566,7 +566,7 @@ export const appealMockData = [
         potentialRecovery: 2200,
         costOfAppeal: 250,
         daysSinceSubmission: 15,
-        actionsNeeded: 'Follow up with payer',
+        notes: 'Follow up with payer',
         outcome: {
             status: 'Pending',
             recoveredAmount: null,
@@ -613,7 +613,7 @@ export const appealMockData = [
         potentialRecovery: 0,
         costOfAppeal: 200,
         daysSinceSubmission: 25,
-        actionsNeeded: 'Prepare second level appeal',
+        notes: 'Prepare second level appeal',
         outcome: {
             status: 'Lost',
             recoveredAmount: 0,
@@ -662,7 +662,7 @@ export const appealMockData = [
         potentialRecovery: 2800,
         costOfAppeal: 180,
         daysSinceSubmission: 8,
-        actionsNeeded: 'Submit additional documentation',
+        notes: 'Submit additional documentation',
         outcome: {
             status: 'Pending',
             recoveredAmount: null,
