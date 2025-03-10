@@ -62,9 +62,75 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
     };
 
     const downloadDocs = () => {
+        console.log(appeal)
         if (appeal && appeal.supportingDocs) {
             appeal.supportingDocs.forEach(doc => {
-                const blob = new Blob([`This is a fake document for ${doc}`], { type: 'text/plain' });
+                let blob;
+                if (doc === "Appeal Letter") {
+                    // Create the appeal letter document using the provided template
+                    const letterTemplate = `
+[Your Name]
+Medical Billing Specialist
+[Your Facility/Organization Name]
+[Your Address]
+[City, State, ZIP Code]
+[Phone Number]
+[Email Address]
+[Date]
+
+[Insurance Company Name]
+[Claims Department or Appeals Department]
+[Address]
+[City, State, ZIP Code]
+
+Re: Appeal for Denied Medical Claim
+Patient Name: ${denial.patient.name}
+Date of Service: ${denial.serviceDate}
+Claim Number: ${denial.denialId}
+Policy Number: [Patient's Insurance Policy Number]
+
+Dear [Insurance Company Name] Claims/Appeals Department,
+
+I am writing to formally appeal the denial of the medical claim for ${denial.patient.name} for services rendered on ${denial.serviceDate}. As a medical billing specialist representing [Your Facility/Organization Name], I have reviewed the denial reason provided and believe this decision was made in error. I respectfully request a reconsideration of this claim.
+
+Reason for Denial: [State the reason for denial as provided by the insurance company, e.g., "lack of medical necessity," "coding error," "missing information," etc.]
+
+Grounds for Appeal:
+
+Medical Necessity: The services provided were medically necessary for the diagnosis and treatment of [Patient's Condition]. Attached is supporting documentation, including the patient's medical records, physician notes, and test results, which demonstrate the necessity of the treatment.
+
+Coding Accuracy: The claim was submitted with the appropriate CPT and ICD-10 codes ([list codes if applicable]) that accurately reflect the services rendered. If there was a coding error, we have reviewed and corrected the claim accordingly.
+
+Authorization/Pre-Certification: If prior authorization was required, we have confirmed that it was obtained on [Date] (see attached authorization confirmation).
+
+Policy Coverage: The services rendered are covered under the patient's policy as outlined in their benefits summary.
+
+Supporting Documentation:
+To assist in your review, I have included the following documents:
+
+- Patient's medical records and physician notes
+- Itemized billing statement
+- Explanation of Benefits (EOB)
+- Prior authorization confirmation (if applicable)
+- Any additional supporting documentation
+
+I kindly request a thorough review of this appeal and a prompt response. If additional information is required, please do not hesitate to contact me at [Your Phone Number] or [Your Email Address].
+
+Thank you for your attention to this matter. I look forward to resolving this issue and ensuring that ${denial.patient.name} receives the coverage they are entitled to under their policy.
+
+Sincerely,
+[Your Full Name]
+Medical Billing Specialist
+[Your Facility/Organization Name]
+
+Enclosures:
+- ${appeal.supportingDocs.filter(d => d !== "Appeal Letter").join(', ')}
+                    `;
+                    blob = new Blob([letterTemplate], { type: 'text/plain' });
+                } else {
+                    // Create a generic document for other types
+                    blob = new Blob([`This is a fake document for ${doc}`], { type: 'text/plain' });
+                }
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
