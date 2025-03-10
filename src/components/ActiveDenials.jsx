@@ -354,6 +354,7 @@ const ActiveDenials = () => {
                 onClose={() => setIsSidebarOpen(false)}
                 updateNotes={updateNotes}
                 updateStatus={updateStatus}
+                successProbability={selectedDenial ? appealData.find(appeal => appeal.id === selectedDenial.linkedAppealId)?.successProbability : 0}
             />
 
             {/* AI Enhancement Sidebar */}

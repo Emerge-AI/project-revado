@@ -22,12 +22,19 @@ const PriorityBadge = ({ priority }) => {
     );
 };
 
-const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, updateNotes, updateStatus }) => {
+const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, updateNotes, updateStatus, successProbability }) => {
     const appeal = denial ? appealData.find(appeal => appeal.id === denial.linkedAppealId) : null;
     const [notes, setNotes] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [status, setStatus] = useState(appeal?.status?.main || ''); // Initialize status
+
+    // Define success probability reasons
+    const successProbReasons = [
+        { reason: 'Previously Appealed this Code Successfully' },
+        { reason: 'Medical Documentation Added' },
+        { reason: 'Following Payer Modifier Rules' }
+    ];
 
     // Update notes whenever the appeal changes
     useEffect(() => {
@@ -364,6 +371,29 @@ Enclosures:
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {/* Success Probability Section */}
+                                            {appeal && (
+                                                <div className="bg-white rounded-lg border border-gray-200 p-1.5 group">
+                                                    <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Success Probability</h3>
+                                                    <div className="flex items-center">
+                                                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                            <div
+                                                                className="bg-indigo-600 h-1.5 rounded-full"
+                                                                style={{ width: `${successProbability}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="ml-2 text-xs text-gray-900">{successProbability}%</span>
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 mt-1 group-hover:block">
+                                                        {successProbReasons.map((item, index) => (
+                                                            <div key={index} className="text-left">
+                                                                {item.reason}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
     
                                         {/* Right Column - Appeal Details */}
@@ -473,22 +503,6 @@ Enclosures:
                                                 <div className="text-left">
                                                     <label className="text-xs font-medium text-gray-500 block">Cost of Appeal</label>
                                                     <p className="text-xs text-gray-900">${appeal.costOfAppeal.toLocaleString()}</p>
-                                                </div>
-                                            </div>
-    
-                                            {/* Success Probability */}
-                                            <div className="bg-white rounded-lg border border-gray-200 p-1.5">
-                                                <div className="text-left">
-                                                    <label className="text-xs font-medium text-gray-500 block">Success Probability</label>
-                                                    <div className="flex items-center">
-                                                        <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                                            <div
-                                                                className="bg-indigo-600 h-1.5 rounded-full"
-                                                                style={{ width: `${appeal.successProbability}%` }}
-                                                            ></div>
-                                                        </div>
-                                                        <span className="ml-2 text-xs text-gray-900">{appeal.successProbability}%</span>
-                                                    </div>
                                                 </div>
                                             </div>
     

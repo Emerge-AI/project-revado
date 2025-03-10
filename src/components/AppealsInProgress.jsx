@@ -499,6 +499,7 @@ const AppealsInProgress = () => {
                 appeal={selectedAppeal}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
+                handleDenialClick={handleDenialClick}
             />
 
             {/* Denial Details Sidebar */}
