@@ -43,7 +43,6 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
         window.location = "mailto:" + email;
     }
 
-
     const handleSaveNotes = () => {
         // Call the updateNotes function passed from the parent
         if (updateNotes && appeal) {
@@ -59,6 +58,58 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
         setStatus(newStatus);
         if (updateStatus && appeal) {
             updateStatus(appeal.id, newStatus); // Pass the appeal ID and updated status
+        }
+    };
+
+    const downloadDocs = () => {
+        if (appeal && appeal.supportingDocs) {
+            appeal.supportingDocs.forEach(doc => {
+                const blob = new Blob([`This is a fake document for ${doc}`], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${doc}.txt`; // Set the file name
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); // Clean up the URL object
+            });
+        }
+    };
+
+    const exportToCSV = () => {
+        if (appeal) {
+            const csvRows = [];
+            const headers = ['Field', 'Value'];
+            csvRows.push(headers.join(','));
+
+            // Add relevant appeal data to CSV
+            const data = [
+                { field: 'Appeal ID', value: appeal.id },
+                { field: 'Status', value: appeal.status.main },
+                { field: 'Assigned To', value: `${appeal.assignedTo.name} (${appeal.assignedTo.role})` },
+                { field: 'Submitted Date', value: appeal.submittedDate },
+                { field: 'Expected Response Date', value: appeal.expectedResponseDate },
+                { field: 'Amount Appealed', value: `$${appeal.amountAppealed.toLocaleString()}` },
+                { field: 'Potential Recovery', value: `$${appeal.potentialRecovery.toLocaleString()}` },
+                { field: 'Notes', value: appeal.notes || 'No notes available.' },
+                // Add more fields as necessary
+            ];
+
+            data.forEach(row => {
+                csvRows.push(`${row.field},${row.value}`);
+            });
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Appeal_${appeal.id}.csv`; // Set the file name
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // Clean up the URL object
         }
     };
 
@@ -273,17 +324,17 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
                                                             </span>
                                                             <span className="px-2 text-xs text-gray-500">{appeal.status.sub}</span>
                                                         </div>
+                                                        <select
+                                                            value={status}
+                                                            onChange={handleStatusChange}
+                                                            className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                        >
+                                                            <option value="Draft">Draft</option>
+                                                            <option value="Under Review">Under Review</option>
+                                                            <option value="Lost">Lost</option>
+                                                            <option value="Won">Won</option>
+                                                        </select>
                                                     </div>
-                                                    <select
-                                                        value={status}
-                                                        onChange={handleStatusChange}
-                                                        className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                                    >
-                                                        <option value="Draft">Draft</option>
-                                                        <option value="Under Review">Under Review</option>
-                                                        <option value="Lost">Lost</option>
-                                                        <option value="Won">Won</option>
-                                                    </select>
                                                 </div>
                                             </div>
     
@@ -502,12 +553,16 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
                                         {/* Download Appeal Package */}
                                         <button
                                             className="bg-gray-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-gray-700 flex items-center gap-1 text-xs transition-colors duration-150"
-                                            onClick={() => console.log('Download Appeal Package')}
+                                            onClick={downloadDocs}
                                         >
                                             <FaDownload className="text-xs" />
                                             <span>Download Docs</span>
                                         </button>
-                                        <button className="bg-green-600 text-white px-2 py-0.5  rounded-full shadow-lg hover:bg-green-700 flex items-center gap-1 text-xs transition-colors duration-150">
+                                        {/* Export to CSV */}
+                                        <button 
+                                            className="bg-green-600 text-white px-2 py-0.5 rounded-full shadow-lg hover:bg-green-700 flex items-center gap-1 text-xs transition-colors duration-150"
+                                            onClick={exportToCSV}
+                                        >
                                             <FaFileExport className="text-xs" />
                                             <span className="font-medium">Export to CSV</span>
                                         </button>
