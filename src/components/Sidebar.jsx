@@ -17,7 +17,6 @@ const Sidebar = ({ isMobile, isOpen, onClose }) => {
             items: [
                 { name: 'Denial Overview', icon: <FiHome />, path: '/dashboard' },
                 { name: 'Active Denials', icon: <FiFileText />, path: '/active-denials' },
-                { name: 'Appeals in Progress', icon: <FiFileText />, path: '/appeals' },
             ],
         },
         {
