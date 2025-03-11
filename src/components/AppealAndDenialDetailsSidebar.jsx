@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt, FaSave } from 'react-icons/fa';
 // import { appealMockData } from '../mockData';
+import { medicalRecordSummary, correctedClaimFile, letterOfMedicalNecessity} from '../mockData';
 
 const PriorityBadge = ({ priority }) => {
     const colors = {
@@ -133,6 +134,12 @@ Enclosures:
 - ${appeal.supportingDocs.filter(d => d !== "Appeal Letter").join(', ')}
                     `;
                     blob = new Blob([letterTemplate], { type: 'text/plain' });
+                } else if (doc.toLowerCase() === "medical record summary") {
+                    blob = new Blob([medicalRecordSummary], { type: 'text/plain' });
+                } else if(doc.toLowerCase() === "corrected claim file") {
+                    blob = new Blob([correctedClaimFile], { type: 'text/plain' });
+                } else if(doc.toLowerCase() === "letter of medical necessity") {
+                    blob = new Blob([letterOfMedicalNecessity], { type: 'text/plain' });
                 } else {
                     // Create a generic document for other types
                     blob = new Blob([`This is a fake document for ${doc}`], { type: 'text/plain' });

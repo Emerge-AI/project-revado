@@ -87,7 +87,7 @@ export const denialMockData = [
         },
         denialReason: 'CO-50: Non-covered service',
         denialCategory: 'Clinical',
-        rootCause: 'Service not covered under patient’s plan.',
+        rootCause: 'Service not covered under patient\'s plan.',
         amount: 3500,
         daysLeft: 8,
         status: 'Appeal Ready',
@@ -226,7 +226,7 @@ export const denialMockData = [
         },
         denialReason: 'CO-29: Time limit expired',
         denialCategory: 'Administrative',
-        rootCause: 'Claim submitted after the payer’s filing deadline.',
+        rootCause: 'Claim submitted after the payer\'s filing deadline.',
         amount: 800,
         daysLeft: 15,
         status: 'New',
@@ -260,7 +260,7 @@ export const denialMockData = [
         },
         denialReason: 'CO-96: Non-covered charges',
         denialCategory: 'Financial',
-        rootCause: 'Service not covered under patient’s plan.',
+        rootCause: 'Service not covered under patient\'s plan.',
         amount: 2200,
         daysLeft: 2,
         status: 'Urgent Review',
@@ -382,7 +382,7 @@ export var appealMockData = [
             recoveryBreakdown: null,
             notes: null
         },
-        supportingDocs: ['Appeal Letter', 'Operative Report', 'Corrected Claim File'],
+        supportingDocs: ['Appeal Letter', 'Operative Report', 'Corrected Claim File', 'Medical Record Summary', 'Letter of Medical Necessity'],
         successProbability: 75,
         escalationLevel: 1,
         notes: 'Modifier -25 was missing on CPT 99213. Clinical notes have been prepared and submitted to support the appeal.',
@@ -689,3 +689,89 @@ export var appealMockData = [
         appealSource: 'Automated System'
     }
 ];
+
+export var medicalRecordSummary = `
+MEDICAL RECORD SUMMARY Patient: John Doe MRN: 12345 DOB: 06/15/1975 Insurance: UnitedHealthcare Policy #: UHC456789012
+VISIT DATE: February 15, 2024 PROVIDER: Dr. James Wilson LOCATION: Emerge Medical Center - Orthopedics Department
+CHIEF COMPLAINT Patient presents with persistent left knee pain and limited mobility for the past 4 months.
+HISTORY OF PRESENT ILLNESS 48-year-old male with progressively worsening left knee pain. Symptoms have been persistent for approximately 4 months without a clear inciting event. Patient reports:
+    • Pain scale: 8/10
+    • Difficulty with weight-bearing activities
+    • Pain exacerbated by prolonged walking or stair climbing
+    • Swelling and stiffness, especially in the morning
+    • No significant relief with NSAIDs or physical therapy
+    • Prior corticosteroid injection provided only temporary relief
+PAST MEDICAL HISTORY
+    1 Hypertension - managed with medication
+    2 Hyperlipidemia
+    3 Osteoarthritis
+MEDICATIONS
+    1 Amlodipine 5mg daily
+    2 Atorvastatin 20mg daily
+    3 Ibuprofen 800mg as needed
+ALLERGIES No known drug allergies (NKDA)
+PHYSICAL EXAMINATION Vital Signs:
+    • BP: 132/80
+    • HR: 74
+    • RR: 16
+    • Temp: 98.4°F
+    • O2 Sat: 98% RA
+Musculoskeletal Examination: Left Knee:
+    • Moderate joint effusion
+    • Pain with active and passive range of motion
+    • Positive McMurray test
+    • Positive patellar grind test
+    • No ligamentous instability
+DIAGNOSTIC STUDIES MRI Left Knee (02/13/2024):
+    • Medial meniscus tear (complex)
+    • Moderate tricompartmental osteoarthritis
+    • No significant ligamentous injury
+ASSESSMENT
+    1 Left knee medial meniscus tear
+    2 Left knee osteoarthritis
+PLAN
+    1 Recommend arthroscopic knee surgery for meniscus repair and debridement
+    2 Discussed surgical risks, benefits, and alternatives
+    3 Patient agrees to proceed with surgery
+    4 Pre-operative clearance required from PCP
+    5 Surgery scheduled within next 2 weeks
+    6 Prescribed:
+        ◦ Tramadol 50mg q6h prn pain
+        ◦ Continue current medications
+FOLLOW-UP Schedule pre-operative evaluation in 1 week
+Time Spent: 30 minutes
+50% time spent in counseling regarding surgical options and post-operative expectations
+Electronically signed by: James Wilson, MD Board Certified Orthopedic Surgeon License #: 12345 NPI: 9876543210 Date: February 15, 2024 14:30
+`;
+
+export var correctedClaimFile = `
+CORRECTED CLAIM FILE
+Patient Information: Patient Name: John Doe Date of Birth: 06/15/1975 MRN: 12345 Insurance Provider: UnitedHealthcare Policy Number: UHC456789012
+Provider Information: Provider Name: Dr. James Wilson, MD NPI: 9876543210 Facility Name: Emerge Medical Center - Orthopedics Department Provider Contact: (XXX) XXX-XXXX
+Claim Information: Original Claim Number: DNL-0456 Date of Service: February 15, 2024 Procedure Performed: Arthroscopic knee surgery - meniscus repair and debridement CPT Code(s): 29881, 29877, 99213-25 ICD-10 Code(s): M23.21 (Medial Meniscus Tear, Left Knee), M17.12 (Unilateral Primary Osteoarthritis, Left Knee)
+Correction Details:
+    • Original Submission Error: Missing modifier -25 on CPT code 99213.
+    • Correction: Modifier -25 has been appended to CPT 99213 to indicate a significant, separately identifiable evaluation and management (E/M) service provided on the same day as the procedure.
+    • Supporting Documentation: Attached are the medical records, physician notes, MRI results, and prior authorization confirmation to substantiate medical necessity and coding accuracy.
+Supporting Attachments:
+    • Corrected CMS-1500 Claim Form (with appropriate modifiers)
+    • Operative Report
+    • Preoperative & Postoperative Notes
+    • Medical Necessity Letter from Dr. James Wilson
+    • Prior Authorization Confirmation (if applicable)
+    • Explanation of Benefits (EOB) from Initial Denial
+Request for Reconsideration: We respectfully request that UnitedHealthcare review this corrected claim and process it accordingly. The necessary modifications have been made to ensure compliance with billing guidelines. If further clarification or additional documentation is needed, please contact us at the information below.
+Sincerely, Maria Garcia Medical Billing Specialist Emerge Medical Center maria.garcia@emergemedicalcenter.org
+`;
+
+export var letterOfMedicalNecessity = `
+LETTER OF MEDICAL NECESSITY
+Date: February 15, 2024 To: UnitedHealthcare From: Dr. James Wilson, MD Patient Name: John Doe MRN: 12345 DOB: 06/15/1975
+To Whom It May Concern,
+I am writing on behalf of my patient, John Doe, to request approval for arthroscopic knee surgery to repair a medial meniscus tear and perform debridement. Mr. Doe has been under my care for persistent left knee pain and limited mobility for the past four months. His symptoms have progressively worsened despite conservative treatment measures, including NSAIDs, physical therapy, and a prior corticosteroid injection, which provided only temporary relief.
+Recent MRI imaging dated February 13, 2024, confirmed a complex medial meniscus tear along with moderate tricompartmental osteoarthritis. Physical examination findings, including moderate joint effusion, pain with active and passive range of motion, and positive McMurray and patellar grind tests, further support this diagnosis.
+Given the failure of conservative management and the presence of significant structural damage, arthroscopic knee surgery is the most appropriate course of action to restore function, reduce pain, and improve the patient’s quality of life. This procedure is medically necessary to prevent further deterioration and to facilitate an optimal recovery.
+I respectfully request that UnitedHealthcare authorize this procedure so that Mr. Doe can proceed with the necessary surgical intervention. Please do not hesitate to contact my office should you require additional documentation or have any questions.
+Sincerely, James Wilson, MD Board Certified Orthopedic Surgeon License #: 12345 NPI: 9876543210 Contact: Emerge Medical Center - Orthopedics Department Phone: (XXX) XXX-XXXX Email: drwilson@emergeortho.com
+
+`
