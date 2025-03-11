@@ -78,25 +78,24 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
                     const letterTemplate = `
 [Your Name]
 Medical Billing Specialist
-[Your Facility/Organization Name]
-[Your Address]
-[City, State, ZIP Code]
-[Phone Number]
-[Email Address]
-[Date]
+Wyandot Memorial Hospital
+885 N Sandusky Ave
+Upper Sandusky, OH 43351
+(419) 294-4991
+email@wyandotmemorial.org
+${new Date().toLocaleString()}
 
-[Insurance Company Name]
-[Claims Department or Appeals Department]
-[Address]
-[City, State, ZIP Code]
+${denial.payer} Claims Department & Appeals Department
+PO Box 1459
+Minneapolis, MN 55440-1459
 
 Re: Appeal for Denied Medical Claim
 Patient Name: ${denial.patient.name}
 Date of Service: ${denial.serviceDate}
 Claim Number: ${denial.denialId}
-Policy Number: [Patient's Insurance Policy Number]
+Policy Number: ${denial.patient.mrn}
 
-Dear [Insurance Company Name] Claims/Appeals Department,
+Dear ${denial.payer} Claims/Appeals Department,
 
 I am writing to formally appeal the denial of the medical claim for ${denial.patient.name} for services rendered on ${denial.serviceDate}. As a medical billing specialist representing [Your Facility/Organization Name], I have reviewed the denial reason provided and believe this decision was made in error. I respectfully request a reconsideration of this claim.
 
@@ -151,13 +150,15 @@ Enclosures:
     };
 
     const exportToCSV = () => {
-        if (appeal) {
+        if (appeal && denial) {
             const csvRows = [];
-            const headers = ['Field', 'Value'];
+            const headers = [
+                'Field', 'Value'
+            ];
             csvRows.push(headers.join(','));
 
             // Add relevant appeal data to CSV
-            const data = [
+            const appealData = [
                 { field: 'Appeal ID', value: appeal.id },
                 { field: 'Status', value: appeal.status.main },
                 { field: 'Assigned To', value: `${appeal.assignedTo.name} (${appeal.assignedTo.role})` },
@@ -166,10 +167,32 @@ Enclosures:
                 { field: 'Amount Appealed', value: `$${appeal.amountAppealed.toLocaleString()}` },
                 { field: 'Potential Recovery', value: `$${appeal.potentialRecovery.toLocaleString()}` },
                 { field: 'Notes', value: appeal.notes || 'No notes available.' },
-                // Add more fields as necessary
+                { field: 'Success Probability', value: `${appeal.successProbability}%` },
+                { field: 'Days Left', value: appeal.daysLeft },
+                { field: 'Appeal Type', value: appeal.appealType },
+                { field: 'Appeal Category', value: appeal.appealCategory },
+                { field: 'Cost of Appeal', value: `$${appeal.costOfAppeal.toLocaleString()}` },
+                { field: 'Appeal Priority', value: appeal.appealPriority },
+                { field: 'Appeal Source', value: appeal.appealSource },
             ];
 
-            data.forEach(row => {
+            // Add relevant denial data to CSV
+            const denialData = [
+                { field: 'Denial ID', value: denial.denialId },
+                { field: 'Denial Reason', value: denial.denialReason },
+                { field: 'Denial Date', value: denial.denialDate },
+                { field: 'Service Date', value: denial.serviceDate },
+                { field: 'Payer', value: denial.payer },
+                { field: 'Amount', value: `$${denial.amount.toLocaleString()}` },
+                { field: 'Days Left to Appeal', value: denial.daysLeft },
+                { field: 'Priority', value: denial.priority },
+                { field: 'Appeal Manager', value: denial.appealManager },
+            ];
+
+            // Combine both appeal and denial data
+            const combinedData = [...appealData, ...denialData];
+
+            combinedData.forEach(row => {
                 csvRows.push(`${row.field},${row.value}`);
             });
 
@@ -499,12 +522,12 @@ Enclosures:
                                             </div>
     
                                             {/* Cost of Appeal */}
-                                            <div className="bg-white rounded-lg border border-gray-200 p-1.5">
+                                            {/* <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
                                                     <label className="text-xs font-medium text-gray-500 block">Cost of Appeal</label>
                                                     <p className="text-xs text-gray-900">${appeal.costOfAppeal.toLocaleString()}</p>
                                                 </div>
-                                            </div>
+                                            </div> */}
     
                                             {/* Supporting Docs */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">

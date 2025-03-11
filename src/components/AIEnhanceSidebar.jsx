@@ -153,7 +153,7 @@ System: Revado AI
 
 Representative Information:
 -------------------------
-Name: John Smith
+Name: John Doe
 ID: REP-${Math.random().toString(36).substr(2, 9)}
 Department: Appeals Processing
 
@@ -190,7 +190,7 @@ FULL TRANSCRIPT
 
 [00:15] Auto System: "Thank you for calling UnitedHealthcare Appeals Department. This call may be recorded for quality assurance purposes."
 
-[00:30] Representative: "Thank you for holding. This is John Smith from the Appeals Processing team. May I have your name and provider ID?"
+[00:30] Representative: "Thank you for holding. This is John Doe from the Appeals Processing team. May I have your name and provider ID?"
 
 [01:00] Sandy (AI): "Hello, I am Sandy, an AI representative from Revado. I'm calling regarding appeal APL-1001. My authentication code is RVD-${Math.random().toString(36).substr(2, 9)}."
 
@@ -210,7 +210,7 @@ FULL TRANSCRIPT
 
 [03:00] Sandy (AI): "Acknowledged. For verification: Are there any additional documents required at this time? My records show we submitted clinical notes and an operative report."
 
-[03:15] Representative: "No additional documentation is needed. The clinical notes and operative report you provided are sufficient for the review."
+[03:15] Representative: "The Operative Report and the Corrected Claim file are needed for the review."
 
 [03:30] Sandy (AI): "I will update our system accordingly. Could you please confirm the following details for my records:
 1. Appeal is under clinical review
