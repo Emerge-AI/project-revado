@@ -382,7 +382,7 @@ export var appealMockData = [
             recoveryBreakdown: null,
             notes: null
         },
-        supportingDocs: ['Appeal Letter', 'Operative Report', 'Corrected Claim File', 'Medical Record Summary', 'Letter of Medical Necessity'],
+        supportingDocs: ['Appeal Letter', 'Corrected Claim File', 'Medical Record Summary', 'Letter of Medical Necessity'],
         successProbability: 75,
         escalationLevel: 1,
         notes: 'Modifier -25 was missing on CPT 99213. Clinical notes have been prepared and submitted to support the appeal.',
