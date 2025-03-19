@@ -1,3 +1,11 @@
+# Project Revado
+
+## Overview
+
+The best way to fight claims denials
+
+## Setup
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
@@ -62,6 +70,43 @@ For a more focused test of the core functionality:
 
 This will test the search and scrape functionality with predefined inputs.
 
+## API Utility Scripts
+
+Two utility scripts are provided to help you interact with the API:
+
+### api_examples.sh
+
+This script contains a comprehensive set of executable examples that demonstrate how to use the API:
+
+```
+./api_examples.sh
+```
+
+It includes:
+- Basic API health checks
+- Policy retrieval examples
+- Search functionality
+- Scraping operations
+- Advanced workflows with multiple steps
+
+### policy_tools.sh
+
+This interactive script provides shell functions you can use directly in your terminal:
+
+```
+source ./policy_tools.sh
+```
+
+After sourcing, you'll have access to convenient functions:
+- `search_policies "diabetes" "Medicare" 3` - Search for policies
+- `scrape_policy "https://example.com" "Example" "test policy"` - Scrape a specific URL
+- `check_policy_status "https://example.com"` - Check scraping status
+- `get_policies_for_payer "Medicare"` - Get all policies for a payer
+- `get_policy_by_id 1` - Get a policy by ID
+- `search_and_scrape "diabetes" "Medicare" 2` - Search and scrape in one operation
+
+These functions include error checking, parameter validation, and helpful output formatting.
+
 ## API Endpoints
 
 ### Search Endpoints
@@ -122,3 +167,7 @@ curl -X POST http://localhost:8000/scrape-policy \
 If you encounter a "No module named 'backend'" error when running `python -m main` from the backend directory, use the provided `run_server.sh` script instead, which sets up the correct Python path.
 
 For more detailed logs and debugging, check the server console output where errors and debug messages are printed.
+
+### API Health Check Logs
+
+The API health check script generates detailed JSON log files (e.g., `api_health_check_20250319_020053.json`) containing the results of all tests. These logs are automatically ignored by git (via .gitignore) to avoid cluttering the repository.
