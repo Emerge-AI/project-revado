@@ -957,7 +957,7 @@ const DetailsContent = () => {
 
     // Mock data for details view
     const denials = [
-        { id: 'DNL-1001', patient: 'John Smith', date: '2023-05-15', amount: 3500, payer: 'UnitedHealthcare', status: 'New', reason: 'Medical Necessity', daysLeft: 12 },
+        { id: 'DNL-1001', patient: 'John Doe', date: '2023-05-15', amount: 3500, payer: 'UnitedHealthcare', status: 'New', reason: 'Medical Necessity', daysLeft: 12 },
         { id: 'DNL-1002', patient: 'Mary Johnson', date: '2023-05-14', amount: 1800, payer: 'Aetna', status: 'Appealed', reason: 'Missing Authorization', daysLeft: 8 },
         { id: 'DNL-1003', patient: 'Robert Williams', date: '2023-05-12', amount: 5200, payer: 'Blue Cross', status: 'Under Review', reason: 'Coding Error', daysLeft: 15 },
         { id: 'DNL-1004', patient: 'Susan Brown', date: '2023-05-10', amount: 950, payer: 'Cigna', status: 'Appealed', reason: 'Documentation Issue', daysLeft: 7 },

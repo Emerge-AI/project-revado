@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaRobot, FaCheck, FaTimes, FaClock, FaHistory } from 'react-icons/fa';
-import DenialDetailsSidebar from './DenialDetailsSidebar';
-import { AppealDetailsSidebar } from './AppealsInProgress';
+import AppealsAndDenialDetailsSidebar from './AppealAndDenialDetailsSidebar';
+import AIEnhanceSidebar from './AIEnhanceSidebar';
 import { denialMockData, appealMockData } from '../mockData';
 
 const PriorityBadge = ({ priority }) => {
@@ -18,7 +18,7 @@ const PriorityBadge = ({ priority }) => {
     };
 
     return (
-        <span className={`inline-flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full text-sm font-medium whitespace-nowrap min-w-[90px] ${colors[priority]}`}>
+        <span className={`inline-flex gap-1.5 px-3 py-0.5 rounded-full text-sm font-medium whitespace-nowrap min-w-[90px] ${colors[priority]}`}>
             {emojis[priority]} {priority.charAt(0).toUpperCase() + priority.slice(1)}
         </span>
     );
@@ -27,11 +27,11 @@ const PriorityBadge = ({ priority }) => {
 const ActiveDenials = () => {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
     const [data, setData] = useState(denialMockData);
+    const [appealData, setAppealData] = useState(appealMockData);
     const [selectedDenials, setSelectedDenials] = useState(new Set());
     const [selectedDenial, setSelectedDenial] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [selectedAppeal, setSelectedAppeal] = useState(null);
-    const [isAppealSidebarOpen, setIsAppealSidebarOpen] = useState(false);
+    const [isAIEnhanceSidebarOpen, setIsAIEnhanceSidebarOpen] = useState(false);    
 
     const handleSort = (key) => {
         let direction = 'asc';
@@ -107,19 +107,37 @@ const ActiveDenials = () => {
     const isAllSelected = data.length > 0 && selectedDenials.size === data.length;
     const hasSelections = selectedDenials.size > 0;
 
+    const handleNotesClick = (denial) => {
+        setSelectedDenial(denial);
+        setIsNotesSidebarOpen(true);
+        setIsSidebarOpen(false);
+    };
+    
     const handleDenialClick = (denial) => {
         setSelectedDenial(denial);
         setIsSidebarOpen(true);
-        setIsAppealSidebarOpen(false);
     };
 
-    const handleAppealClick = (appealId) => {
-        const appeal = appealMockData.find(a => a.id === appealId);
-        if (appeal) {
-            setSelectedAppeal(appeal);
-            setIsAppealSidebarOpen(true);
-            setIsSidebarOpen(false);
-        }
+    const updateNotes = (appealId, newNotes) => {
+        var updatedAppeals = appealData.map(appeal => {
+            if (appeal.id === appealId) {
+                return { ...appeal, notes: newNotes }; // Update the notes for the specific appeal
+            }
+            return appeal;
+        });
+        // Update the mock data or state here as needed
+        // For example, if you have a state for appeals, you would set it here
+        setAppealData(updatedAppeals);
+    };
+
+    const updateStatus = (appealId, newStatus) => {
+        var updatedAppeals = appealData.map(appeal => {
+            if (appeal.id === appealId) {
+                return { ...appeal, status: { ...appeal.status, main: newStatus } }; // Update the status for the specific appeal
+            }
+            return appeal;
+        });
+        setAppealData(updatedAppeals);
     };
 
     return (
@@ -130,7 +148,7 @@ const ActiveDenials = () => {
                     <thead className="bg-gray-200">
                         <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                <div className="flex items-center">
+                                <div className="flex">
                                     <input
                                         type="checkbox"
                                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
@@ -141,70 +159,65 @@ const ActiveDenials = () => {
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('priority')}>
-                                <div className="flex items-center space-x-1">
+                                <div className="flex space-x-1">
                                     <span>Priority</span>
                                     {getSortIcon('priority')}
                                 </div>
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
-                                onClick={() => handleSort('denialId')}>
-                                <div className="flex items-center space-x-1">
-                                    <span>Denial ID</span>
-                                    {getSortIcon('denialId')}
-                                </div>
-                            </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                <div className="flex items-center">
+                                <div className="flex">
                                     <span>Linked Appeal</span>
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('patient')}>
-                                <div className="flex items-center space-x-1">
+                                <div className="flex space-x-1">
                                     <span>Patient</span>
                                     {getSortIcon('patient')}
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('serviceDate')}>
-                                <div className="flex items-center space-x-1">
+                                <div className="flex space-x-1">
                                     <span>Service Date</span>
                                     {getSortIcon('serviceDate')}
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('denialDate')}>
-                                <div className="flex items-center space-x-1">
+                                <div className="flex space-x-1">
                                     <span>Denial Date</span>
                                     {getSortIcon('denialDate')}
                                 </div>
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                <div className="flex items-center">
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer"
+                                onClick={() => handleSort('payer')}>
+                                <div className="flex space-x-1">
                                     <span>Payer</span>
+                                    {getSortIcon('payer')}
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                <div className="flex items-center">
+                                <div className="flex">
                                     <span>Denial Reason</span>
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('amount')}>
-                                <div className="flex items-center space-x-1">
+                                <div className="flex space-x-1">
                                     <span>Amount</span>
                                     {getSortIcon('amount')}
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
                                 onClick={() => handleSort('daysLeft')}>
-                                <div className="flex items-center space-x-1">
+                                <div className="flex space-x-1">
                                     <span>Deadline</span>
                                     {getSortIcon('daysLeft')}
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                <div className="flex items-center">
+                                <div className="flex">
                                     <span>Status</span>
                                 </div>
                             </th>
@@ -219,7 +232,7 @@ const ActiveDenials = () => {
                                 className={`hover:bg-gray-200 transition-colors duration-150 ${selectedDenials.has(denial.id) ? 'bg-indigo-50' : ''
                                     }`}>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center">
+                                    <div className="flex">
                                         <input
                                             type="checkbox"
                                             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
@@ -231,24 +244,21 @@ const ActiveDenials = () => {
                                 <td className="px-6 py-4">
                                     <PriorityBadge priority={denial.priority} />
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-700">
-                                    <button
-                                        onClick={() => handleDenialClick(denial)}
-                                        className="hover:text-indigo-900"
-                                    >
-                                        {denial.denialId}
-                                    </button>
-                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     {denial.linkedAppealId ? (
                                         <button
-                                            onClick={() => handleAppealClick(denial.linkedAppealId)}
+                                            onClick={() => handleDenialClick(denial)}
                                             className="text-indigo-700 hover:text-indigo-900"
                                         >
                                             {denial.linkedAppealId}
                                         </button>
                                     ) : (
-                                        <span className="text-gray-500">No appeal linked</span>
+                                        <button
+                                            onClick={() => handleDenialClick(denial)}
+                                            className="text-indigo-700 hover:text-indigo-900"
+                                        >
+                                            No Appeal Linked
+                                        </button>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -276,40 +286,38 @@ const ActiveDenials = () => {
                                     <div className="text-sm text-orange-700">{denial.daysLeft} days left</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-50 text-blue-700">
-                                        {denial.status}
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                        appealData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main === 'Lost' 
+                                            ? 'bg-red-50 text-red-700'
+                                            : appealData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main === 'Won'
+                                                ? 'bg-green-50 text-green-700'
+                                                : 'bg-blue-50 text-blue-700'
+                                    }`}>
+                                        { appealData.find(appeal => appeal.id === denial.linkedAppealId)?.status?.main ?? denial.status }
                                     </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button className="text-indigo-700 hover:text-indigo-900 mr-3">
-                                        <FaEdit className="inline" /> Edit
-                                    </button>
-                                    <button className="text-green-700 hover:text-green-900">
-                                        <FaPaperPlane className="inline" /> Resubmit
-                                    </button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
                 <div className="bg-gray-100 px-4 py-3 border-t border-gray-200 sm:px-6">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between">
                         <div className="text-sm text-gray-700">
                             Showing <span className="font-medium">1</span> to <span className="font-medium">10</span> of{' '}
                             <span className="font-medium">20</span> results
                         </div>
                         <div className="flex-1 flex justify-end">
                             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-500 hover:bg-gray-200">
+                                <button className="relative inline-flex px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-500 hover:bg-gray-200">
                                     Previous
                                 </button>
-                                <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200">
+                                <button className="relative inline-flex px-4 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200">
                                     1
                                 </button>
-                                <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200">
+                                <button className="relative inline-flex px-4 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200">
                                     2
                                 </button>
-                                <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-500 hover:bg-gray-200">
+                                <button className="relative inline-flex px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-500 hover:bg-gray-200">
                                     Next
                                 </button>
                             </nav>
@@ -319,10 +327,10 @@ const ActiveDenials = () => {
             </div>
 
             {/* Top Action Bar */}
-            <div className={`fixed top-4 ml-64 left-4 flex items-center space-x-3 transition-all duration-300 transform ${hasSelections ? 'translate-y-0 opacity-100' : '-translate-y-16 opacity-0'
+            <div className={`fixed top-4 ml-64 left-4 flex space-x-3 transition-all duration-300 transform ${hasSelections ? 'translate-y-0 opacity-100' : '-translate-y-16 opacity-0'
                 }`}>
                 {/* Selection Count Badge */}
-                <div className="bg-gray-700 text-white px-4 py-2 rounded-full shadow-md flex items-center space-x-2">
+                <div className="bg-gray-700 text-white px-4 py-2 rounded-full shadow-md flex space-x-2">
                     <FaCheck className="text-sm" />
                     <span>{selectedDenials.size} selected</span>
                 </div>
@@ -330,8 +338,8 @@ const ActiveDenials = () => {
                 {/* Batch AI Edit Button */}
                 <button
                     className="bg-indigo-600 text-white px-6 py-2 rounded-full shadow-lg hover:bg-indigo-700 
-                             flex items-center space-x-2 transition-colors duration-150"
-                    onClick={() => console.log('Batch AI Appeal', Array.from(selectedDenials))}
+                             flex space-x-2 transition-colors duration-150"
+                    onClick={() => setIsAIEnhanceSidebarOpen(true)}
                 >
                     <FaRobot className="text-lg" />
                     <span className="font-medium">AI Appeal {selectedDenials.size} Denial{selectedDenials.size > 1 ? 's' : ''}</span>
@@ -339,17 +347,21 @@ const ActiveDenials = () => {
             </div>
 
             {/* Denial Details Sidebar */}
-            <DenialDetailsSidebar
+            <AppealsAndDenialDetailsSidebar
                 denial={selectedDenial}
+                appealData={appealData}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
+                updateNotes={updateNotes}
+                updateStatus={updateStatus}
+                successProbability={selectedDenial ? appealData.find(appeal => appeal.id === selectedDenial.linkedAppealId)?.successProbability : 0}
             />
 
-            {/* Appeal Details Sidebar */}
-            <AppealDetailsSidebar
-                appeal={selectedAppeal}
-                isOpen={isAppealSidebarOpen}
-                onClose={() => setIsAppealSidebarOpen(false)}
+            {/* AI Enhancement Sidebar */}
+            <AIEnhanceSidebar
+                isOpen={isAIEnhanceSidebarOpen}
+                onClose={() => setIsAIEnhanceSidebarOpen(false)}
+                selectedAppeals={selectedDenials}
             />
         </div>
     );

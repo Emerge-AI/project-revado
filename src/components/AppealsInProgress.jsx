@@ -3,6 +3,7 @@ import { FaSort, FaSortUp, FaSortDown, FaEdit, FaPaperPlane, FaFile, FaImage, Fa
 import DenialDetailsSidebar from './DenialDetailsSidebar';
 import { denialMockData, appealMockData } from '../mockData';
 import AIEnhanceSidebar from './AIEnhanceSidebar';
+import NotesSideBar from './NotesSideBar';
 
 const StatusBadge = ({ status }) => {
     const colors = {
@@ -50,7 +51,7 @@ const ProgressBar = ({ current, total }) => {
     );
 };
 
-export const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
+export const AppealDetailsSidebar = ({ appeal, isOpen, onClose, handleDenialClick }) => {
     if (!appeal) return null;
 
     const auditTrail = [
@@ -65,6 +66,17 @@ export const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
         { date: '2024-02-20', type: 'Inbound', message: 'Additional documentation requested' },
         { date: '2024-02-21', type: 'Outbound', message: 'Provided requested clinical notes' },
     ];
+
+    const successProbReasons = [
+        {reason: 'Previously Appealed this Code Successfully'},
+        {reason: 'Medical Documentation Added'},
+        {reason: 'Following Payer Modifier Rules'}
+    ];
+
+    const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+    const handleSuccessClick = () => {
+        setIsSuccessOpen(!isSuccessOpen);
+    };
 
     return (
         <div className={`fixed inset-y-0 right-0 w-96 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-50 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -88,7 +100,9 @@ export const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
                         </div>
                         <div>
                             <label className="text-sm font-medium text-gray-500">Linked Denial</label>
-                            <p className="text-sm text-indigo-700 hover:text-indigo-900 cursor-pointer">{appeal.linkedDenialId}</p>
+                            <p className="text-sm text-indigo-700 hover:text-indigo-900 cursor-pointer">
+                                <a href="#" onClick={handleDenialClick}>{appeal.linkedDenialId}</a>
+                            </p>
                         </div>
                         <div>
                             <label className="text-sm font-medium text-gray-500">Status</label>
@@ -128,7 +142,7 @@ export const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
                         </div>
                         <div>
                             <label className="text-sm font-medium text-gray-500">Success Probability</label>
-                            <div className="flex items-center">
+                            <div className="flex items-center cursor-pointer hover:" onClick={handleSuccessClick} >
                                 <span className={`text-sm font-medium ${appeal.successProbability >= 70 ? 'text-green-700' :
                                     appeal.successProbability >= 40 ? 'text-yellow-700' :
                                         'text-red-700'
@@ -138,6 +152,18 @@ export const AppealDetailsSidebar = ({ appeal, isOpen, onClose }) => {
                                 {appeal.successProbability >= 70 && <FaCheck className="ml-1 text-green-700" />}
                             </div>
                         </div>
+                        {isSuccessOpen && (
+                        <div className="space-y-4">
+                        {successProbReasons.map((entry, index) => (
+                            <div key={index} className="flex items-start space-x-3">
+                                <FaCheck className="text-gray-400 mt-1"/>
+                                <div className="text-sm text-gray-900">
+                                    {entry.reason}
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -198,6 +224,7 @@ const AppealsInProgress = () => {
     const [selectedDenial, setSelectedDenial] = useState(null);
     const [isDenialSidebarOpen, setIsDenialSidebarOpen] = useState(false);
     const [isAIEnhanceSidebarOpen, setIsAIEnhanceSidebarOpen] = useState(false);
+    const [isNotesSidebarOpen, setIsNotesSidebarOpen] = useState(false);
 
     const handleSort = (key) => {
         let direction = 'asc';
@@ -221,10 +248,18 @@ const AppealsInProgress = () => {
         return sortConfig.direction === 'asc' ? <FaSortUp className="inline" /> : <FaSortDown className="inline" />;
     };
 
+    const handleNotesClick = (appeal) => {
+        setSelectedAppeal(appeal);
+        setIsNotesSidebarOpen(true);
+        setIsDenialSidebarOpen(false);
+        setIsSidebarOpen(false);
+    };
+
     const handleAppealClick = (appeal) => {
         setSelectedAppeal(appeal);
         setIsSidebarOpen(true);
         setIsDenialSidebarOpen(false);
+        setIsNotesSidebarOpen(false);
     };
 
     const handleDenialClick = (denialId) => {
@@ -233,6 +268,7 @@ const AppealsInProgress = () => {
             setSelectedDenial(denial);
             setIsDenialSidebarOpen(true);
             setIsSidebarOpen(false);
+            setIsNotesSidebarOpen(false);
         }
     };
 
@@ -309,7 +345,7 @@ const AppealsInProgress = () => {
                                 </div>
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Appeal Reason
+                                Denial Reason
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 Payer
@@ -404,8 +440,9 @@ const AppealsInProgress = () => {
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
                                     <div className="flex items-center text-indigo-700">
-                                        <FaEdit className="mr-1" />
-                                        {appeal.actionsNeeded}
+                                        <button onClick={() => handleNotesClick(appeal)}>
+                                            <FaEdit className="mr-1"/>
+                                        </button>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -462,6 +499,7 @@ const AppealsInProgress = () => {
                 appeal={selectedAppeal}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
+                handleDenialClick={handleDenialClick}
             />
 
             {/* Denial Details Sidebar */}
@@ -476,6 +514,13 @@ const AppealsInProgress = () => {
                 isOpen={isAIEnhanceSidebarOpen}
                 onClose={() => setIsAIEnhanceSidebarOpen(false)}
                 selectedAppeals={selectedAppeals}
+            />
+
+            {/* Notes Sidebar */}
+            <NotesSideBar
+                appeal={selectedAppeal}
+                isOpen={isNotesSidebarOpen}
+                onClose={() => setIsNotesSidebarOpen(false)}
             />
         </div>
     );
