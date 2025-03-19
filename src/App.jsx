@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import ActiveDenials from './components/ActiveDenials'
-import AppealsInProgress from './components/AppealsInProgress'
 import DenialOverview from './components/DenialOverview'
 import './App.css'
 
@@ -75,7 +74,6 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DenialOverview />} />
             <Route path="/active-denials" element={<ActiveDenials />} />
-            <Route path="/appeals" element={<AppealsInProgress />} />
             <Route path="/new-appeal" element={<PageContent title="New Appeal" />} />
             <Route path="/bulk-resubmit" element={<PageContent title="Bulk Resubmit" />} />
             <Route path="/trends" element={<PageContent title="Trends" />} />
