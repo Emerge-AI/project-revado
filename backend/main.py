@@ -124,12 +124,40 @@ async def search_policies(search_request: SearchRequest):
         # Debug: Print results to server log
         print(f"Search results: {results}")
         
-        # Return raw results for debugging
-        return {"results": results}
+        # Sanitize results to ensure all values are JSON serializable
+        sanitized_results = []
+        for result in results:
+            sanitized_result = {}
+            for key, value in result.items():
+                # Convert any problematic types to strings
+                if callable(value):
+                    sanitized_result[key] = str(value())
+                elif isinstance(value, (int, float, bool, str, type(None))):
+                    sanitized_result[key] = value
+                else:
+                    # For any other types, convert to string
+                    sanitized_result[key] = str(value)
+            sanitized_results.append(sanitized_result)
+        
+        # Return sanitized results
+        return {"results": sanitized_results}
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        error_stack = traceback.format_exc()
+        print(f"Error in search_policies: {str(e)}")
+        print(error_stack)
+        
+        # Return a proper JSON response with error details
+        return {
+            "error": True,
+            "message": str(e),
+            "details": "An error occurred during the search. Please check the server logs for more information.",
+            "search_request": {
+                "search_term": search_request.search_term,
+                "payer_name": search_request.payer_name,
+                "max_results": search_request.max_results
+            }
+        }
 
 @app.post("/search-and-scrape", response_model=List[PolicyData])
 async def search_and_scrape(search_request: SearchRequest, background_tasks: BackgroundTasks):
@@ -412,6 +440,67 @@ async def debug_policy_mappings():
         "next_policy_id": next_policy_id,
         "policies_in_db": len(policies_db)
     }
+
+@app.post("/debug-search-policies")
+async def debug_search_policies(search_request: SearchRequest):
+    """
+    Debug version of search_policies that provides detailed output for troubleshooting
+    """
+    try:
+        searcher = PolicySearcher()
+        print(f"Starting debug search for '{search_request.search_term}' on payer '{search_request.payer_name}'")
+        
+        results = await searcher.search_policies(
+            search_term=search_request.search_term,
+            payer_name=search_request.payer_name,
+            max_results=search_request.max_results
+        )
+        
+        # Debug: Print results to server log
+        print(f"Debug search results raw: {results}")
+        
+        # Process each result to ensure it's serializable and print details
+        processed_results = []
+        for i, result in enumerate(results):
+            print(f"Result {i+1}:")
+            processed_result = {}
+            for key, value in result.items():
+                print(f"  {key}: {type(value)} = {value}")
+                # Handle different types
+                if callable(value):
+                    processed_value = str(value())
+                    print(f"    - Callable converted to: {processed_value}")
+                    processed_result[key] = processed_value
+                elif hasattr(value, "__dict__"):
+                    processed_value = str(value)
+                    print(f"    - Object converted to: {processed_value}")
+                    processed_result[key] = processed_value
+                else:
+                    processed_result[key] = value
+            processed_results.append(processed_result)
+            
+        return {
+            "results": processed_results,
+            "success": True,
+            "message": "Debug search completed successfully"
+        }
+    except Exception as e:
+        import traceback
+        error_stack = traceback.format_exc()
+        print(f"Error in debug_search_policies: {str(e)}")
+        print(error_stack)
+        
+        # Return detailed error information
+        return {
+            "error": True,
+            "message": str(e),
+            "traceback": error_stack,
+            "search_request": {
+                "search_term": search_request.search_term,
+                "payer_name": search_request.payer_name,
+                "max_results": search_request.max_results
+            }
+        }
 
 if __name__ == "__main__":
     import uvicorn

@@ -9,22 +9,48 @@ from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 class PolicyScraper:
     def __init__(self):
-        self.downloads_path = os.path.join(Path.home(), ".crawl4ai", "policy_downloads")
-        os.makedirs(self.downloads_path, exist_ok=True)
-        
-        # Configure browser settings
+        # Simplified browser config with only parameters known to work
         self.browser_config = BrowserConfig(
             headless=True,
-            verbose=True,
-            user_data_dir=os.path.join(Path.home(), ".crawl4ai", "policy_browser_data")
+            verbose=True
         )
+        self.downloads_path = "./downloads"
+        
+        # Define payer-specific scraping configurations
+        self.payer_configs = {
+            "medicare": {
+                "wait_for": "networkidle",
+                "content_selector": "main, .content, .article-content, article",
+                "exclude_selector": ".header, .footer, .nav, .menu, .sidebar, .related, .recommendation, .banner",
+                "policy_terms": ["policy", "coverage", "guideline", "criteria", "determination", "medical necessity", "procedure"]
+            },
+            "default": {
+                "wait_for": "networkidle",
+                "content_selector": "main, .content, article",
+                "exclude_selector": ".header, .footer, .nav, .menu, .sidebar",
+                "policy_terms": ["policy", "coverage", "guideline"]
+            }
+        }
 
     async def scrape_policy(self, url: str, payer_name: str, query: Optional[str] = None) -> dict:
         """
-        Scrape policy content from the given URL using crawl4ai
+        Scrape policy content from a given URL
         """
         try:
             print(f"Starting to scrape policy: {url} for payer: {payer_name}")
+            
+            # Get payer-specific configuration or use default
+            payer_key = payer_name.lower()
+            config = self.payer_configs.get(payer_key, self.payer_configs["default"])
+            
+            # Enhance query with payer-specific policy terms if query is not provided or minimal
+            if not query or len(query.split()) < 3:
+                policy_terms = " ".join(config["policy_terms"])
+                enhanced_query = f"{query} {policy_terms}" if query else policy_terms
+            else:
+                enhanced_query = query
+                
+            print(f"Using enhanced query: {enhanced_query}")
             
             async with AsyncWebCrawler(
                 config=self.browser_config,
@@ -33,24 +59,59 @@ class PolicyScraper:
             ) as crawler:
                 # Create content filter
                 content_filter = BM25ContentFilter(
-                    user_query=query if query else "medical policy guidelines coverage criteria"
+                    user_query=enhanced_query
                 )
                 
                 # Create markdown generator with content filter
                 markdown_generator = DefaultMarkdownGenerator(content_filter=content_filter)
                 
-                # Configure crawler run settings
-                run_config = CrawlerRunConfig(
-                    markdown_generator=markdown_generator,
-                    js_code=[
+                # Configure crawler run settings with safe parameter handling
+                run_config_params = {
+                    "markdown_generator": markdown_generator,
+                    "js_code": [
                         # Add any JavaScript needed to handle dynamic content
                         """
                         // Scroll to load any lazy-loaded content
-                        window.scrollTo(0, document.body.scrollHeight);
+                        function scrollPage() {
+                            window.scrollTo(0, 0);
+                            let totalHeight = document.body.scrollHeight;
+                            let scrollStep = totalHeight / 10;
+                            let currentScroll = 0;
+                            
+                            function scroll() {
+                                if (currentScroll < totalHeight) {
+                                    currentScroll += scrollStep;
+                                    window.scrollTo(0, currentScroll);
+                                    setTimeout(scroll, 200);
+                                }
+                            }
+                            
+                            scroll();
+                        }
+                        scrollPage();
                         """
-                    ],
-                    wait_for="networkidle"  # Wait for network to be idle instead of numeric value
-                )
+                    ]
+                }
+                
+                # Only add parameters that are known to work with crawl4ai
+                # Some crawl4ai versions support these, but not all
+                try:
+                    # Try to add wait_for parameter, which may not be supported in all versions
+                    if config["wait_for"]:
+                        run_config_params["wait_for"] = config["wait_for"]
+                    
+                    # Note: We're not adding these parameters as they may not be supported
+                    # in the current version of crawl4ai being used
+                    # if "content_selector" in config and config["content_selector"]:
+                    #     run_config_params["content_selector"] = config["content_selector"]
+                    # 
+                    # if "exclude_selector" in config and config["exclude_selector"]:
+                    #     run_config_params["exclude_selector"] = config["exclude_selector"]
+                except Exception as e:
+                    print(f"Warning: Some configuration parameters might not be supported: {str(e)}")
+                
+                # Create the run configuration with validated parameters
+                run_config = CrawlerRunConfig(**run_config_params)
 
                 # Execute the crawl
                 print(f"Executing crawl for URL: {url}")

@@ -15,11 +15,20 @@ class PolicySearcher:
         
         # Common payer domains and their search URLs
         self.payer_search_urls = {
-            "medicare": "https://www.cms.gov/search",
+            "medicare": "https://www.cms.gov/search/cms",
             "unitedhealthcare": "https://www.uhcprovider.com/en/search-results.html",
             "cigna": "https://www.cigna.com/search",
             "aetna": "https://www.aetna.com/search",
             # Add more payers as needed
+        }
+        
+        # Define specific search query parameter names by payer
+        self.payer_search_params = {
+            "medicare": "keys",  # CMS uses "keys" for search terms
+            "unitedhealthcare": "q",
+            "cigna": "q",
+            "aetna": "q",
+            # Default is "q" for others
         }
 
     async def search_policies(self, search_term: str, payer_name: Optional[str] = None, max_results: int = 5) -> List[Dict]:
@@ -70,14 +79,48 @@ class PolicySearcher:
         Search a specific payer's domain for relevant policies
         """
         try:
-            # Add search term to URL if it's a search page
-            search_url = f"{start_url}?q={search_term}" if "search" in start_url else start_url
+            # Determine which payer domain we're searching
+            payer_name = None
+            for name, url in self.payer_search_urls.items():
+                if url in start_url:
+                    payer_name = name
+                    break
             
-            # Execute the crawl
-            results = await crawler.arun(
-                url=search_url,
-                config=config
-            )
+            print(f"Searching {payer_name} domain at {start_url}")
+            
+            # Format search term - replace spaces with + for URL compatibility
+            formatted_search_term = search_term.replace(' ', '+')
+            
+            # Get the appropriate query parameter name
+            if payer_name and payer_name in self.payer_search_params:
+                param_name = self.payer_search_params[payer_name]
+                print(f"Using payer-specific parameter '{param_name}' for {payer_name}")
+            else:
+                param_name = "q"  # Default
+                print(f"Using default parameter 'q' for search")
+            
+            # Construct the search URL
+            if "?" in start_url:
+                # URL already has parameters
+                search_url = f"{start_url}&{param_name}={formatted_search_term}"
+            else:
+                # URL does not have parameters yet
+                search_url = f"{start_url}?{param_name}={formatted_search_term}"
+            
+            print(f"Final search URL: {search_url}")
+            
+            # Execute the crawl with error handling
+            try:
+                results = await crawler.arun(
+                    url=search_url,
+                    config=config
+                )
+                print(f"Successfully executed crawler for {search_url}")
+            except Exception as e:
+                print(f"Error executing crawler for {search_url}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return []
 
             # Process results
             policy_results = []
@@ -88,8 +131,9 @@ class PolicySearcher:
                 crawl_results = results
             else:
                 # Deep crawl results might be in an attribute
-                if not results.success:
-                    print(f"Failed to search {start_url}: {results.error}")
+                if not hasattr(results, 'success') or not results.success:
+                    error_msg = getattr(results, 'error', 'Unknown error') if hasattr(results, 'error') else 'Unknown error'
+                    print(f"Failed to search {start_url}: {error_msg}")
                     return []
                 
                 if hasattr(results, 'deep_crawl_results') and results.deep_crawl_results:
@@ -100,13 +144,24 @@ class PolicySearcher:
             # Process each result
             for page in crawl_results:
                 if hasattr(page, 'success') and page.success and hasattr(page, 'markdown') and page.markdown:
+                    title = self._extract_title(page)
+                    summary = self._generate_summary(page)
+                    
+                    # Get relevance score, ensuring it's a numeric value
+                    relevance_score = 0.0
+                    if hasattr(page, 'metadata') and isinstance(page.metadata, dict) and 'score' in page.metadata:
+                        try:
+                            relevance_score = float(page.metadata['score'])
+                        except (ValueError, TypeError):
+                            relevance_score = 0.0
+                            
                     # Ensure we use exact key names matching the SearchResult model
                     current_time = datetime.now()
                     policy_results.append({
-                        'url': page.url,
-                        'title': self._extract_title(page),
-                        'summary': self._generate_summary(page),
-                        'relevance_score': page.metadata.get('score', 0.0) if hasattr(page, 'metadata') else 0.0,
+                        'url': str(page.url),
+                        'title': str(title),
+                        'summary': str(summary),
+                        'relevance_score': relevance_score,
                         'found_date': current_time
                     })
 
@@ -120,7 +175,13 @@ class PolicySearcher:
     def _extract_title(self, page) -> str:
         """Extract the title from the crawled page"""
         if hasattr(page, 'markdown') and page.markdown and hasattr(page.markdown, 'title'):
-            return page.markdown.title
+            # Check if title is a string or a method
+            if callable(page.markdown.title):
+                # If it's a method, call it to get the string value
+                return page.markdown.title()
+            else:
+                # If it's already a string value
+                return str(page.markdown.title)
         return "Untitled Policy"
 
     def _generate_summary(self, page) -> str:
