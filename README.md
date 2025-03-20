@@ -159,8 +159,21 @@ curl -X POST http://localhost:8000/test-search-and-scrape \
 # Scrape a specific URL
 curl -X POST http://localhost:8000/scrape-policy \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com", "payer_name": "Example", "query": "test query"}'
+  -d '{"url": "https://example.com", "payer_name": "Example", "query": "test policy"}'
 ```
+
+## Payer-Specific Search Information
+
+The API uses different search URLs and parameters for different payers:
+
+| Payer | Search URL | Parameter | Example |
+|-------|------------|-----------|---------|
+| Medicare/CMS | https://www.cms.gov/search/cms | keys | https://www.cms.gov/search/cms?keys=diabetes+coverage |
+| UnitedHealthcare | https://www.uhcprovider.com/en/search-results.html | q | https://www.uhcprovider.com/en/search-results.html?q=diabetes+coverage |
+| Cigna | https://www.cigna.com/search | q | https://www.cigna.com/search?q=diabetes+coverage |
+| Aetna | https://www.aetna.com/search | q | https://www.aetna.com/search?q=diabetes+coverage |
+
+When searching for Medicare policies, the system will automatically use the correct `keys` parameter instead of the standard `q` parameter, and add payer-specific terms to enhance search relevance.
 
 ## Troubleshooting
 
