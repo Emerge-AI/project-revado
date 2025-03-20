@@ -50,15 +50,114 @@ The server will be available at http://localhost:8000
 
 ## API Testing
 
+### API Health Check Script
+
+The `api_health_check.py` script provides comprehensive testing of the API's functionality, including real searches on the internet. It can test various categories of endpoints and supports customization through command-line arguments.
+
+#### Features:
+
+- Tests basic API functionality, test data endpoints, and real search operations
+- Supports real internet searches for multiple payers (Medicare, UnitedHealthcare, Cigna)
+- Automatically waits for and verifies policy scraping completion
+- Generates detailed JSON reports for test results
+- Configurable test parameters including wait times, attempt counts, and search terms
+- Verbose mode for detailed logging and diagnostics
+
+#### Usage Examples:
+
+```bash
+# Run all tests
+python api_health_check.py
+
+# Show help and examples
+python api_health_check.py --help
+
+# Run only basic API tests
+python api_health_check.py --test-basic
+
+# Run only real search tests
+python api_health_check.py --test-search
+
+# Run real search and scrape tests with custom wait parameters
+python api_health_check.py --test-search-scrape --wait-attempts 10 --wait-delay 15
+
+# Run search tests with a custom search term
+python api_health_check.py --test-search --custom-search "Medicare:telehealth services:5"
+
+# Run search and scrape with a custom search term
+python api_health_check.py --test-search-scrape --custom-scrape "UnitedHealthcare:prior authorization:2"
+
+# Test against a different API server with verbose output
+python api_health_check.py --base-url "https://api.example.com" --verbose
+
+# Run all tests without waiting for policy completion
+python api_health_check.py --no-wait
+```
+
+#### Test Categories:
+
+- `--test-basic`: Tests the root endpoint and basic API functionality
+- `--test-data`: Tests endpoints using the in-memory test data
+- `--test-scrape`: Tests the direct policy scraping endpoint
+- `--test-search`: Tests the search functionality with real internet searches
+- `--test-search-scrape`: Tests the search and scrape functionality with real internet searches
+- `--test-all`: Runs all test categories (default if no category is specified)
+
+#### Configuration Options:
+
+- `--base-url`: Sets the base URL for the API (default: http://localhost:8000)
+- `--verbose` or `-v`: Enables verbose output with detailed logging
+- `--wait-attempts`: Sets the number of attempts to check policy completion (default: 6)
+- `--wait-delay`: Sets the delay between status checks in seconds (default: 10)
+- `--no-wait`: Skips waiting for policy completion
+- `--ignore-timeouts`: Don't fail tests if policies timeout during scraping
+- `--min-relevance`: Sets the minimum relevance score for search results (default: 0.0)
+- `--custom-search`: Adds a custom search test in the format "Payer:SearchTerm:MaxResults"
+- `--custom-scrape`: Adds a custom search and scrape test in the format "Payer:SearchTerm:MaxResults"
+
+#### Key Features:
+
+- **Real Internet Searches**: Tests the search functionality against actual payer websites
+- **Timeout Handling**: Properly reports and fails tests when policies don't complete processing
+- **Relevance Score Verification**: Ensures that search results have meaningful relevance scores
+- **Detailed Logging**: Provides comprehensive information about test results
+- **Customizable Wait Times**: Allows fine-tuning of wait behavior for policy processing
+- **JSON Report Generation**: Creates detailed reports of all test results
+
 ### Quick Health Check
 
-Run the comprehensive API health check to verify all endpoints:
+Run the comprehensive API health check using the convenient shell script:
 
-```
+```bash
 ./run_health_check.sh
 ```
 
-This will test all endpoints and generate a detailed report.
+This script offers various options to customize the health check:
+
+```bash
+# Run only basic API tests
+./run_health_check.sh -m basic
+
+# Run search tests with minimum relevance score requirement
+./run_health_check.sh -m search -r 0.5
+
+# Run search and scrape tests with custom wait times
+./run_health_check.sh -m search-scrape -w 12:20
+
+# Ignore timeouts for policy completion
+./run_health_check.sh -m search-scrape -i
+
+# Add a custom search for Medicare telehealth policies
+./run_health_check.sh -s 'Medicare:telehealth services:5'
+```
+
+For a full list of options, run:
+
+```bash
+./run_health_check.sh --help
+```
+
+A detailed JSON report will be generated with the results of the health check.
 
 ### Targeted API Tests
 
