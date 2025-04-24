@@ -22,6 +22,9 @@ def parse_note_by_segment(content):
         "FT1": [],
     }
     segments = re.split(r'\n', content)
+    if segments and "PID" in segments[2]:
+        if fuzz.token_sort_ratio(segments[2].split('|')[5], patient_name) < 80:
+            return None
     for segment in segments:
         split_segment = segment.split('|')
         if split_segment and split_segment[0] == 'PID':
@@ -69,7 +72,7 @@ def search_patient_name_in_dft(patient_name, sftp_conn):
     Returns:
         dict: Dictionary with filenames as keys and matching lines as values.
     """
-    matches = {}
+    matches = []
     
     try:
         # Get list of files in the DFT directory
@@ -82,10 +85,11 @@ def search_patient_name_in_dft(patient_name, sftp_conn):
             # Read file content
             with sftp_conn.open(full_path, "r") as f:
                 content = f.read()
-                print(f"Content: {content}")
                 if isinstance(content, bytes):
                     content = content.decode('utf-8', errors='replace')
-                segment_data = parse_note_by_segment(content)                    
+                segment_data = parse_note_by_segment(content)         
+                if segment_data:
+                    matches.append(segment_data)
     except Exception as e:
         print(f"Error searching for patient name in DFT directory: {str(e)}")
     
@@ -103,7 +107,7 @@ if __name__ == "__main__":
         password=password,
         cnopts=cnopts
     )
-    patient_name = "BURROWS, MARGARET"  # Replace with the actual patient name
+    patient_name = "MARGARET BURROWS"  # Replace with the actual patient name
     results = search_patient_name_in_dft(patient_name, sftp_connection)
     print(f"Found {len(results)} results for {patient_name}")
     pprint.pprint(results)
