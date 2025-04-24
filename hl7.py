@@ -29,6 +29,7 @@ def parse_note_by_segment(content):
         split_segment = segment.split('|')
         if split_segment and split_segment[0] == 'PID':
             data["PID"] = {
+                "id": split_segment[1],
                 "name": split_segment[5],
                 "dob": split_segment[7],
                 "sex": split_segment[8],
@@ -38,6 +39,7 @@ def parse_note_by_segment(content):
                 "primary_language": split_segment[15],
                 "ethnicity": split_segment[22],
             }
+            pdb.set_trace()
         elif split_segment and split_segment[0] == 'PV1':
             data["PV1"] = {
                 "patient_class": split_segment[1],
