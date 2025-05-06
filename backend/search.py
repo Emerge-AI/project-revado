@@ -38,20 +38,25 @@ class PolicySearcher:
         search_results = []
         
         # Create a content filter based on the search term
-        content_filter = BM25ContentFilter(user_query=search_term)
+        # Use only supported parameters
+        content_filter = BM25ContentFilter(
+            user_query=search_term
+            # Removed unsupported parameter: min_score=0.1
+        )
         
         # Create a markdown generator with the content filter
         markdown_generator = DefaultMarkdownGenerator(content_filter=content_filter)
         
         async with AsyncWebCrawler(config=self.browser_config) as crawler:
-            # Configure deep crawling with BFS strategy
+            # Configure deep crawling with BFS strategy - make score threshold more lenient
             deep_crawl_config = CrawlerRunConfig(
                 markdown_generator=markdown_generator,
                 deep_crawl_strategy=BFSDeepCrawlStrategy(
                     max_depth=2,
                     max_pages=max_results,
-                    score_threshold=0.5  # Only return highly relevant pages
-                )
+                    score_threshold=0.1  # Lower score threshold to capture more pages
+                ),
+                verbose=True  # Enable verbose logging
             )
 
             # If payer is specified, search their specific domain
@@ -129,6 +134,7 @@ class PolicySearcher:
             if isinstance(results, list):
                 # Deep crawl results are returned as a list
                 crawl_results = results
+                print(f"Got a list of {len(crawl_results)} results from crawler")
             else:
                 # Deep crawl results might be in an attribute
                 if not hasattr(results, 'success') or not results.success:
@@ -138,23 +144,43 @@ class PolicySearcher:
                 
                 if hasattr(results, 'deep_crawl_results') and results.deep_crawl_results:
                     crawl_results = results.deep_crawl_results
+                    print(f"Got {len(crawl_results)} results from deep_crawl_results")
                 else:
                     crawl_results = [results]  # Just use the single result
+                    print(f"Using single result from crawler")
+            
+            # Debug: Print available attributes on the first result
+            if crawl_results and len(crawl_results) > 0:
+                first_result = crawl_results[0]
+                print(f"First result attributes: {dir(first_result)}")
+                if hasattr(first_result, 'metadata'):
+                    print(f"First result metadata: {first_result.metadata}")
+            else:
+                print("No results from crawler")
             
             # Process each result
-            for page in crawl_results:
+            for i, page in enumerate(crawl_results):
+                print(f"Processing result {i+1}/{len(crawl_results)}")
                 if hasattr(page, 'success') and page.success and hasattr(page, 'markdown') and page.markdown:
                     title = self._extract_title(page)
                     summary = self._generate_summary(page)
                     
                     # Get relevance score, ensuring it's a numeric value
                     relevance_score = 0.0
-                    if hasattr(page, 'metadata') and isinstance(page.metadata, dict) and 'score' in page.metadata:
-                        try:
-                            relevance_score = float(page.metadata['score'])
-                        except (ValueError, TypeError):
-                            relevance_score = 0.0
-                            
+                    if hasattr(page, 'metadata') and isinstance(page.metadata, dict):
+                        print(f"Metadata for page {i+1}: {page.metadata}")
+                        if 'score' in page.metadata:
+                            try:
+                                relevance_score = float(page.metadata['score'])
+                                print(f"Found score in metadata: {relevance_score}")
+                            except (ValueError, TypeError):
+                                print(f"Error converting score to float: {page.metadata['score']}")
+                                relevance_score = 0.0
+                        else:
+                            print(f"No 'score' key in metadata. Available keys: {list(page.metadata.keys())}")
+                    else:
+                        print(f"Page {i+1} has no metadata attribute or it's not a dict")
+                        
                     # Ensure we use exact key names matching the SearchResult model
                     current_time = datetime.now()
                     policy_results.append({
@@ -164,7 +190,10 @@ class PolicySearcher:
                         'relevance_score': relevance_score,
                         'found_date': current_time
                     })
+                else:
+                    print(f"Page {i+1} doesn't meet criteria: success={hasattr(page, 'success') and page.success}, has_markdown={hasattr(page, 'markdown') and page.markdown}")
 
+            print(f"Returning {len(policy_results)} policy results")
             return policy_results
         except Exception as e:
             import traceback

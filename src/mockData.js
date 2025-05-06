@@ -3,7 +3,7 @@ export const denialMockData = [
         id: 1,
         denialId: 'DNL-0456',
         priority: 'high',
-        patient: { name: 'John Doe', mrn: '12345' },
+        patient: { name: 'Anthony Rodriguez', mrn: '12345' },
         serviceDate: '2024-02-15',
         denialDate: '2024-03-01',
         payer: 'UnitedHealthcare',
@@ -41,7 +41,7 @@ export const denialMockData = [
         id: 2,
         denialId: 'DNL-0789',
         priority: 'high',
-        patient: { name: 'John Doe', mrn: '12345' },
+        patient: { name: 'Anthony Rodriguez', mrn: '12345' },
         serviceDate: '2024-02-18',
         denialDate: '2024-03-02',
         payer: 'UnitedHealthcare',
@@ -405,7 +405,7 @@ export var appealMockData = [
         id: 'APL-1002',
         linkedDenialId: 'DNL-0789',
         status: { main: 'Draft', sub: 'Initial review' },
-        assignedTo: { name: 'John Doe', role: 'Billing' },
+        assignedTo: { name: 'Anthony Rodriguez', role: 'Billing' },
         submittedDate: '2024-02-25',
         expectedResponseDate: '2024-03-30',
         appealDeadline: '2024-03-25',
@@ -442,7 +442,7 @@ export var appealMockData = [
             { date: '2024-02-25', type: 'Email', summary: 'Sent draft appeal to internal team for review.' }
         ],
         nextSteps: 'Submit appeal by 2024-03-25 after attaching prior authorization proof.',
-        assignedTeam: ['John Doe', 'Maria Garcia'],
+        assignedTeam: ['Anthony Rodriguez', 'Maria Garcia'],
         appealPriority: 'Medium',
         appealSource: 'Manual Submission'
     },
@@ -588,7 +588,7 @@ export var appealMockData = [
             { date: '2024-02-20', type: 'Phone', summary: 'Spoke with payer representative to confirm receipt of policy documentation.' }
         ],
         nextSteps: 'Follow up with payer on 2024-03-12 to check the status of the escalated appeal.',
-        assignedTeam: ['Maria Garcia', 'John Doe'],
+        assignedTeam: ['Maria Garcia', 'Anthony Rodriguez'],
         appealPriority: 'High',
         appealSource: 'Automated System'
     },
@@ -691,7 +691,7 @@ export var appealMockData = [
 ];
 
 export var medicalRecordSummary = `
-MEDICAL RECORD SUMMARY Patient: John Doe MRN: 12345 DOB: 06/15/1975 Insurance: UnitedHealthcare Policy #: UHC456789012
+MEDICAL RECORD SUMMARY Patient: Anthony Rodriguez MRN: 12345 DOB: 06/15/1975 Insurance: UnitedHealthcare Policy #: UHC456789012
 VISIT DATE: February 15, 2024 PROVIDER: Dr. James Wilson LOCATION: Emerge Medical Center - Orthopedics Department
 CHIEF COMPLAINT Patient presents with persistent left knee pain and limited mobility for the past 4 months.
 HISTORY OF PRESENT ILLNESS 48-year-old male with progressively worsening left knee pain. Symptoms have been persistent for approximately 4 months without a clear inciting event. Patient reports:
@@ -746,7 +746,7 @@ Electronically signed by: James Wilson, MD Board Certified Orthopedic Surgeon Li
 
 export var correctedClaimFile = `
 CORRECTED CLAIM FILE
-Patient Information: Patient Name: John Doe Date of Birth: 06/15/1975 MRN: 12345 Insurance Provider: UnitedHealthcare Policy Number: UHC456789012
+Patient Information: Patient Name: Anthony Rodriguez Date of Birth: 06/15/1975 MRN: 12345 Insurance Provider: UnitedHealthcare Policy Number: UHC456789012
 Provider Information: Provider Name: Dr. James Wilson, MD NPI: 9876543210 Facility Name: Emerge Medical Center - Orthopedics Department Provider Contact: (XXX) XXX-XXXX
 Claim Information: Original Claim Number: DNL-0456 Date of Service: February 15, 2024 Procedure Performed: Arthroscopic knee surgery - meniscus repair and debridement CPT Code(s): 29881, 29877, 99213-25 ICD-10 Code(s): M23.21 (Medial Meniscus Tear, Left Knee), M17.12 (Unilateral Primary Osteoarthritis, Left Knee)
 Correction Details:
@@ -766,12 +766,244 @@ Sincerely, Maria Garcia Medical Billing Specialist Emerge Medical Center�
 
 export var letterOfMedicalNecessity = `
 LETTER OF MEDICAL NECESSITY
-Date: February 15, 2024 To: UnitedHealthcare From: Dr. James Wilson, MD Patient Name: John Doe MRN: 12345 DOB: 06/15/1975
+Date: February 15, 2024 To: UnitedHealthcare From: Dr. James Wilson, MD Patient Name: Anthony Rodriguez MRN: 12345 DOB: 06/15/1975
 To Whom It May Concern,
-I am writing on behalf of my patient, John Doe, to request approval for arthroscopic knee surgery to repair a medial meniscus tear and perform debridement. Mr. Doe has been under my care for persistent left knee pain and limited mobility for the past four months. His symptoms have progressively worsened despite conservative treatment measures, including NSAIDs, physical therapy, and a prior corticosteroid injection, which provided only temporary relief.
+I am writing on behalf of my patient, Anthony Rodriguez, to request approval for arthroscopic knee surgery to repair a medial meniscus tear and perform debridement. Mr. Doe has been under my care for persistent left knee pain and limited mobility for the past four months. His symptoms have progressively worsened despite conservative treatment measures, including NSAIDs, physical therapy, and a prior corticosteroid injection, which provided only temporary relief.
 Recent MRI imaging dated February 13, 2024, confirmed a complex medial meniscus tear along with moderate tricompartmental osteoarthritis. Physical examination findings, including moderate joint effusion, pain with active and passive range of motion, and positive McMurray and patellar grind tests, further support this diagnosis.
-Given the failure of conservative management and the presence of significant structural damage, arthroscopic knee surgery is the most appropriate course of action to restore function, reduce pain, and improve the patient’s quality of life. This procedure is medically necessary to prevent further deterioration and to facilitate an optimal recovery.
+Given the failure of conservative management and the presence of significant structural damage, arthroscopic knee surgery is the most appropriate course of action to restore function, reduce pain, and improve the patient's quality of life. This procedure is medically necessary to prevent further deterioration and to facilitate an optimal recovery.
 I respectfully request that UnitedHealthcare authorize this procedure so that Mr. Doe can proceed with the necessary surgical intervention. Please do not hesitate to contact my office should you require additional documentation or have any questions.
 Sincerely, James Wilson, MD Board Certified Orthopedic Surgeon License #: 12345 NPI: 9876543210 Contact: Emerge Medical Center - Orthopedics Department Phone: (XXX) XXX-XXXX Email: drwilson@emergeortho.com
 
 `
+
+export const priorAuthMockData = [
+    {
+        id: 1,
+        authId: 'AUTH-0123',
+        priority: 'high',
+        patient: { name: 'Anthony Rodriguez', mrn: '12345' },
+        requestDate: '2024-03-10',
+        serviceDate: '2024-03-25',
+        payer: 'UnitedHealthcare',
+        payerContact: {
+            phone: '1-800-123-4567',
+            email: 'auths@unitedhealthcare.com'
+        },
+        serviceType: 'MRI - Lower Back',
+        serviceCode: '72148',
+        requestedBy: 'Dr. Sarah Williams',
+        daysLeft: 5,
+        status: 'Pending Payer Review',
+        clinicalInfo: [
+            { label: 'Patient History', link: '#' },
+            { label: 'Recent Labs', link: '#' },
+            { label: 'Physician Notes', link: '#' }
+        ],
+        payerPolicyReference: 'https://unitedhealthcare.com/mri-policy',
+        additionalInfo: 'Patient has severe lower back pain with radiculopathy. Conservative treatment failed.',
+        auditTrail: [
+            { timestamp: '2024-03-10 09:15', action: 'Prior Auth Request Submitted' },
+            { timestamp: '2024-03-12 14:30', action: 'Additional Information Requested by Payer' },
+            { timestamp: '2024-03-13 10:45', action: 'Additional Information Submitted' }
+        ]
+    },
+    {
+        id: 2,
+        authId: 'AUTH-0124',
+        priority: 'high',
+        patient: { name: 'Jane Smith', mrn: '12346' },
+        requestDate: '2024-03-11',
+        serviceDate: '2024-03-28',
+        payer: 'Aetna',
+        payerContact: {
+            phone: '1-800-555-1234',
+            email: 'auths@aetna.com'
+        },
+        serviceType: 'CT Scan - Chest',
+        serviceCode: '71250',
+        requestedBy: 'Dr. Michael Chen',
+        daysLeft: 3,
+        status: 'Additional Info Needed',
+        clinicalInfo: [
+            { label: 'Patient History', link: '#' },
+            { label: 'Recent X-rays', link: '#' }
+        ],
+        payerPolicyReference: 'https://aetna.com/ct-scan-policy',
+        additionalInfo: 'Patient has persistent cough and abnormal chest X-ray showing possible mass.',
+        auditTrail: [
+            { timestamp: '2024-03-11 10:30', action: 'Prior Auth Request Submitted' },
+            { timestamp: '2024-03-14 09:45', action: 'Additional Information Requested by Payer' }
+        ]
+    },
+    {
+        id: 3,
+        authId: 'AUTH-0125',
+        priority: 'medium',
+        patient: { name: 'Robert Johnson', mrn: '12347' },
+        requestDate: '2024-03-12',
+        serviceDate: '2024-04-05',
+        payer: 'Cigna',
+        payerContact: {
+            phone: '1-800-987-6543',
+            email: 'auths@cigna.com'
+        },
+        serviceType: 'Outpatient Surgery - Knee Arthroscopy',
+        serviceCode: '29881',
+        requestedBy: 'Dr. James Wilson',
+        daysLeft: 8,
+        status: 'Pending Payer Review',
+        clinicalInfo: [
+            { label: 'Patient History', link: '#' },
+            { label: 'MRI Results', link: '#' },
+            { label: 'Conservative Treatment Notes', link: '#' }
+        ],
+        payerPolicyReference: 'https://cigna.com/arthroscopy-policy',
+        additionalInfo: 'Patient has torn meniscus confirmed by MRI. Failed conservative therapy.',
+        auditTrail: [
+            { timestamp: '2024-03-12 11:15', action: 'Prior Auth Request Submitted' }
+        ]
+    },
+    {
+        id: 4,
+        authId: 'AUTH-0126',
+        priority: 'low',
+        patient: { name: 'Mary Williams', mrn: '12348' },
+        requestDate: '2024-03-13',
+        serviceDate: '2024-04-10',
+        payer: 'BCBS',
+        payerContact: {
+            phone: '1-800-222-3333',
+            email: 'auths@bcbs.com'
+        },
+        serviceType: 'Physical Therapy - 10 sessions',
+        serviceCode: '97110',
+        requestedBy: 'Dr. Patricia Miller',
+        daysLeft: 15,
+        status: 'Approved',
+        clinicalInfo: [
+            { label: 'Patient History', link: '#' },
+            { label: 'Therapy Plan', link: '#' }
+        ],
+        payerPolicyReference: 'https://bcbs.com/pt-policy',
+        additionalInfo: 'Patient recovering from shoulder surgery. Requires PT for proper rehabilitation.',
+        auditTrail: [
+            { timestamp: '2024-03-13 14:00', action: 'Prior Auth Request Submitted' },
+            { timestamp: '2024-03-15 09:30', action: 'Approved by Payer' }
+        ]
+    },
+    {
+        id: 5,
+        authId: 'AUTH-0127',
+        priority: 'high',
+        patient: { name: 'David Brown', mrn: '12349' },
+        requestDate: '2024-03-14',
+        serviceDate: '2024-03-20',
+        payer: 'Medicare',
+        payerContact: {
+            phone: '1-800-633-4227',
+            email: 'auths@medicare.gov'
+        },
+        serviceType: 'Inpatient Admission - Pneumonia',
+        serviceCode: 'MS-DRG 193',
+        requestedBy: 'Dr. Elizabeth Taylor',
+        daysLeft: 1,
+        status: 'Expedited Review',
+        clinicalInfo: [
+            { label: 'Patient History', link: '#' },
+            { label: 'Lab Results', link: '#' },
+            { label: 'Chest X-ray', link: '#' }
+        ],
+        payerPolicyReference: 'https://medicare.gov/admission-policy',
+        additionalInfo: 'Elderly patient with severe pneumonia, hypoxia, and comorbidities requiring inpatient care.',
+        auditTrail: [
+            { timestamp: '2024-03-14 16:45', action: 'Prior Auth Request Submitted - Expedited' }
+        ]
+    },
+    {
+        id: 6,
+        authId: 'AUTH-0128',
+        priority: 'medium',
+        patient: { name: 'Susan Garcia', mrn: '12350' },
+        requestDate: '2024-03-01',
+        serviceDate: '2024-03-15',
+        payer: 'UnitedHealthcare',
+        payerContact: {
+            phone: '1-800-123-4567',
+            email: 'auths@unitedhealthcare.com'
+        },
+        serviceType: 'Genetic Testing - BRCA',
+        serviceCode: '81162',
+        requestedBy: 'Dr. Thomas Anderson',
+        daysLeft: 0,
+        status: 'Denied',
+        clinicalInfo: [
+            { label: 'Patient History', link: '#' },
+            { label: 'Family History', link: '#' }
+        ],
+        payerPolicyReference: 'https://unitedhealthcare.com/genetic-testing-policy',
+        additionalInfo: 'Patient has family history of breast cancer. Mother and sister diagnosed before age 50.',
+        auditTrail: [
+            { timestamp: '2024-03-01 10:00', action: 'Prior Auth Request Submitted' },
+            { timestamp: '2024-03-05 14:30', action: 'Additional Information Requested by Payer' },
+            { timestamp: '2024-03-07 09:15', action: 'Additional Information Submitted' },
+            { timestamp: '2024-03-14 15:30', action: 'Request Denied by Payer - Medical necessity not established' }
+        ]
+    },
+    {
+        id: 7,
+        authId: 'AUTH-0129',
+        priority: 'high',
+        patient: { name: 'Michael Nelson', mrn: '12351' },
+        requestDate: '2024-03-15',
+        serviceDate: '2024-03-30',
+        payer: 'Cigna',
+        payerContact: {
+            phone: '1-800-987-6543',
+            email: 'auths@cigna.com'
+        },
+        serviceType: 'PET Scan - Oncology',
+        serviceCode: '78815',
+        requestedBy: 'Dr. Karen Lewis',
+        daysLeft: 4,
+        status: 'Pending Peer-to-Peer',
+        clinicalInfo: [
+            { label: 'Patient History', link: '#' },
+            { label: 'Prior Imaging', link: '#' },
+            { label: 'Oncology Notes', link: '#' }
+        ],
+        payerPolicyReference: 'https://cigna.com/pet-scan-policy',
+        additionalInfo: 'Patient with newly diagnosed lung cancer. PET scan needed for staging.',
+        auditTrail: [
+            { timestamp: '2024-03-15 11:30', action: 'Prior Auth Request Submitted' },
+            { timestamp: '2024-03-16 15:45', action: 'Initial Review by Payer' },
+            { timestamp: '2024-03-17 09:00', action: 'Marked for Peer-to-Peer Review' }
+        ]
+    },
+    {
+        id: 8,
+        authId: 'AUTH-0130',
+        priority: 'medium',
+        patient: { name: 'Jennifer Wilson', mrn: '12352' },
+        requestDate: '2024-03-16',
+        serviceDate: '2024-04-15',
+        payer: 'Aetna',
+        payerContact: {
+            phone: '1-800-555-1234',
+            email: 'auths@aetna.com'
+        },
+        serviceType: 'CPAP Machine',
+        serviceCode: 'E0601',
+        requestedBy: 'Dr. Robert King',
+        daysLeft: 12,
+        status: 'Awaiting Clinical Records',
+        clinicalInfo: [
+            { label: 'Sleep Study Results', link: '#' }
+        ],
+        payerPolicyReference: 'https://aetna.com/cpap-policy',
+        additionalInfo: 'Patient diagnosed with moderate sleep apnea. AHI 22. Sleep study confirms medical necessity.',
+        auditTrail: [
+            { timestamp: '2024-03-16 13:15', action: 'Prior Auth Request Submitted' },
+            { timestamp: '2024-03-18 10:30', action: 'Clinical Records Requested by Payer' }
+        ]
+    }
+];

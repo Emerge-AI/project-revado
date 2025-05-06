@@ -13,8 +13,9 @@ NC='\033[0m' # No Color
 
 # Constants
 DEFAULT_URL="http://localhost:8000"
-DEFAULT_MODE="basic"
+DEFAULT_MODE="all"
 DEFAULT_MIN_RELEVANCE="0.0"
+DEFAULT_IGNORE_TIMEOUTS=true # By default, ignore timeouts in policy completion
 
 # Initialize variables
 URL="$DEFAULT_URL"
@@ -22,7 +23,7 @@ MODE="$DEFAULT_MODE"
 VERBOSE=""
 WAIT_OPTS=""
 RELEVANCE_OPTS=""
-TIMEOUT_OPTS=""
+TIMEOUT_OPTS="--ignore-timeouts"  # Default to ignoring timeouts
 CUSTOM_OPTS=""
 
 # Show help
@@ -35,21 +36,26 @@ show_help() {
     echo "  -h, --help                Show this help message"
     echo "  -u, --url URL             Set the API base URL (default: $DEFAULT_URL)"
     echo "  -m, --mode MODE           Set the test mode (basic, data, scrape, search, search-scrape, all)"
+    echo "                            Default is 'all' to run all test types, including real searches"
     echo "  -v, --verbose             Enable verbose output"
     echo "  -w, --wait ATTEMPTS:DELAY Set custom wait parameters (e.g., 10:5 for 10 attempts with 5 sec delay)"
     echo "  -n, --no-wait             Don't wait for policy completion"
-    echo "  -i, --ignore-timeouts     Don't fail tests if policies timeout during scraping"
+    echo "  -i, --ignore-timeouts     Don't fail tests if policies timeout during scraping (default: enabled)"
+    echo "  --strict-timeouts         Fail tests if policies timeout during scraping"
     echo "  -r, --min-relevance SCORE Set minimum relevance score for search results (default: $DEFAULT_MIN_RELEVANCE)"
     echo "  -c, --custom TEST         Add a custom test in format 'payer:term:max_results'"
     echo "  --wait-attempts NUM       Set number of attempts to wait for policy completion"
     echo "  --wait-delay SEC          Set delay between wait attempts in seconds"
     echo ""
     echo "Examples:"
-    echo "  # Run basic health check"
+    echo "  # Run all tests (default behavior)"
     echo "  $0"
     echo ""
+    echo "  # Run only basic tests"
+    echo "  $0 -m basic"
+    echo ""
     echo "  # Run all tests against a remote API with verbose output"
-    echo "  $0 -m all -u https://api.example.com -v"
+    echo "  $0 -u https://api.example.com -v"
     echo ""
     echo "  # Run search and scrape test with custom wait and minimum relevance"
     echo "  $0 -m search-scrape -w 20:5 -r 0.5"
@@ -57,8 +63,8 @@ show_help() {
     echo "  # Run search test with a custom search query"
     echo "  $0 -m search -c 'Aetna:diabetes coverage:5'"
     echo ""
-    echo "  # Run search-scrape with specific wait parameters"
-    echo "  $0 -m search-scrape --wait-attempts 3 --wait-delay 5"
+    echo "  # Run search-scrape with specific wait parameters and strict timeout checking"
+    echo "  $0 -m search-scrape --wait-attempts 30 --wait-delay 5 --strict-timeouts"
     echo ""
 }
 
@@ -92,6 +98,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -i|--ignore-timeouts)
             TIMEOUT_OPTS="--ignore-timeouts"
+            shift
+            ;;
+        --strict-timeouts)
+            TIMEOUT_OPTS=""  # Remove timeout ignore option
             shift
             ;;
         -r|--min-relevance)

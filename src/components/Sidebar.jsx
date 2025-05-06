@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     FiSearch, FiHome, FiFileText, FiTrendingUp, FiSettings,
-    FiFolder, FiLink, FiUsers, FiPlusCircle, FiRefreshCw
+    FiFolder, FiLink, FiUsers, FiPlusCircle, FiRefreshCw,
+    FiClipboard, FiCheckSquare
 } from 'react-icons/fi';
 
 const Sidebar = ({ isMobile, isOpen, onClose }) => {
@@ -24,6 +25,13 @@ const Sidebar = ({ isMobile, isOpen, onClose }) => {
             items: [
                 { name: 'New Appeal', icon: <FiPlusCircle />, path: '/new-appeal' },
                 { name: 'Bulk Resubmit', icon: <FiRefreshCw />, path: '/bulk-resubmit' },
+            ],
+        },
+        {
+            title: 'PRIOR AUTH',
+            items: [
+                { name: 'Prior Authorizations', icon: <FiClipboard />, path: '/prior-auth' },
+                { name: 'Auth Requests', icon: <FiCheckSquare />, path: '/auth-requests' },
             ],
         },
         {

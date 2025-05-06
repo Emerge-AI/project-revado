@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Sidebar from './components/Sidebar'
 import ActiveDenials from './components/ActiveDenials'
 import DenialOverview from './components/DenialOverview'
+import PriorAuth from './components/PriorAuth'
 import './App.css'
 
 // Placeholder component for routes
@@ -76,6 +77,8 @@ function App() {
             <Route path="/active-denials" element={<ActiveDenials />} />
             <Route path="/new-appeal" element={<PageContent title="New Appeal" />} />
             <Route path="/bulk-resubmit" element={<PageContent title="Bulk Resubmit" />} />
+            <Route path="/prior-auth" element={<PriorAuth />} />
+            <Route path="/auth-requests" element={<PageContent title="Auth Requests" />} />
             <Route path="/trends" element={<PageContent title="Trends" />} />
             <Route path="/financial-impact" element={<PageContent title="Financial Impact" />} />
             <Route path="/appeal-letters" element={<PageContent title="Appeal Letters" />} />

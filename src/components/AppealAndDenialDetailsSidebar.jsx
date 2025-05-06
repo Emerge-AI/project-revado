@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt, FaSave } from 'react-icons/fa';
 // import { appealMockData } from '../mockData';
-import { medicalRecordSummary, correctedClaimFile, letterOfMedicalNecessity} from '../mockData';
+import { medicalRecordSummary, correctedClaimFile, letterOfMedicalNecessity } from '../mockData';
 
 const PriorityBadge = ({ priority }) => {
     const colors = {
@@ -136,9 +136,9 @@ Enclosures:
                     blob = new Blob([letterTemplate], { type: 'text/plain' });
                 } else if (doc.toLowerCase() === "medical record summary") {
                     blob = new Blob([medicalRecordSummary], { type: 'text/plain' });
-                } else if(doc.toLowerCase() === "corrected claim file") {
+                } else if (doc.toLowerCase() === "corrected claim file") {
                     blob = new Blob([correctedClaimFile], { type: 'text/plain' });
-                } else if(doc.toLowerCase() === "letter of medical necessity") {
+                } else if (doc.toLowerCase() === "letter of medical necessity") {
                     blob = new Blob([letterOfMedicalNecessity], { type: 'text/plain' });
                 } else {
                     // Create a generic document for other types
@@ -219,11 +219,11 @@ Enclosures:
     return (
         <>
             {/* Overlay */}
-            <div 
+            <div
                 className={`fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={onClose}
             />
-    
+
             {/* Modal */}
             <div className={`fixed inset-0 overflow-hidden z-50 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className="absolute inset-0 overflow-hidden">
@@ -237,12 +237,12 @@ Enclosures:
                                         <FaTimes className="h-4 w-4" />
                                     </button>
                                 </div>
-    
+
                                 {/* Content */}
-                                <div className="flex-1 p-2 overflow-y-auto">
+                                <div className="flex-1 p-2 overflow-y-auto pb-24">
                                     <div className="grid grid-cols-2 gap-2 h-full">
                                         {/* Left Column - Denial Details */}
-                                        <div className="space-y-1">    
+                                        <div className="space-y-1 overflow-y-auto">
                                             {/* Basic Info Section */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Basic Information</h3>
@@ -271,7 +271,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Patient Information */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Patient Information</h3>
@@ -286,7 +286,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Timeline Section */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Timeline</h3>
@@ -310,7 +310,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Financial Section */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Financial Details</h3>
@@ -333,7 +333,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Payer Contact Information */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Payer Contact Information</h3>
@@ -348,7 +348,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Payer Policy Reference */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Payer Policy Reference</h3>
@@ -425,9 +425,9 @@ Enclosures:
                                                 </div>
                                             )}
                                         </div>
-    
+
                                         {/* Right Column - Appeal Details */}
-                                        {appeal && <div className="space-y-1">
+                                        {appeal && <div className="space-y-1 overflow-y-auto">
                                             {/* Appeal ID and Status */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <h3 className="text-sm font-medium text-gray-900 mb-0.5 text-left">Appeal Information</h3>
@@ -439,13 +439,12 @@ Enclosures:
                                                     <div className="text-left">
                                                         <label className="text-xs font-medium text-gray-500 block">Status</label>
                                                         <div className="flex justify-start">
-                                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                                appeal.status.main.toLowerCase() === 'won' 
-                                                                    ? 'bg-green-50 text-green-700'
-                                                                    : appeal.status.main.toLowerCase() === 'lost'
+                                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${appeal.status.main.toLowerCase() === 'won'
+                                                                ? 'bg-green-50 text-green-700'
+                                                                : appeal.status.main.toLowerCase() === 'lost'
                                                                     ? 'bg-red-50 text-red-700'
                                                                     : 'bg-blue-50 text-blue-700'
-                                                            }`}>
+                                                                }`}>
                                                                 {appeal.status.main}
                                                             </span>
                                                             <span className="px-2 text-xs text-gray-500">{appeal.status.sub}</span>
@@ -463,7 +462,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Assigned To */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -471,7 +470,7 @@ Enclosures:
                                                     <p className="text-xs text-gray-900">{appeal.assignedTo.name} ({appeal.assignedTo.role})</p>
                                                 </div>
                                             </div>
-    
+
                                             {/* Appeal Type and Category */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="grid grid-cols-2 gap-1">
@@ -485,7 +484,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Dates */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="grid grid-cols-2 gap-1">
@@ -499,7 +498,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Days Left and Appeal Deadline */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="grid grid-cols-2 gap-1">
@@ -513,7 +512,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Amount Appealed and Potential Recovery */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="grid grid-cols-2 gap-1">
@@ -527,7 +526,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Cost of Appeal */}
                                             {/* <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -535,7 +534,7 @@ Enclosures:
                                                     <p className="text-xs text-gray-900">${appeal.costOfAppeal.toLocaleString()}</p>
                                                 </div>
                                             </div> */}
-    
+
                                             {/* Supporting Docs */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -552,7 +551,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Appeal History */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -566,7 +565,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Communication Log */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -580,7 +579,7 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-    
+
                                             {/* Next Steps */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -588,7 +587,7 @@ Enclosures:
                                                     <p className="text-xs text-gray-900">{appeal.nextSteps}</p>
                                                 </div>
                                             </div>
-    
+
                                             {/* Assigned Team */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -596,7 +595,7 @@ Enclosures:
                                                     <p className="text-xs text-gray-900">{appeal.assignedTeam.join(', ')}</p>
                                                 </div>
                                             </div>
-    
+
                                             {/* Appeal Priority and Source */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="grid grid-cols-2 gap-1">
@@ -610,11 +609,10 @@ Enclosures:
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        }
+                                        </div>}
                                     </div>
                                 </div>
-    
+
                                 {/* Footer */}
                                 <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-200">
                                     <div className="flex justify-start gap-1 flex-wrap">
@@ -669,14 +667,14 @@ Enclosures:
                                             <span>Download Docs</span>
                                         </button>
                                         {/* Export to CSV */}
-                                        <button 
+                                        <button
                                             className="bg-green-600 text-white px-2 py-0.5 rounded-full shadow-lg hover:bg-green-700 flex items-center gap-1 text-xs transition-colors duration-150"
                                             onClick={exportToCSV}
                                         >
                                             <FaFileExport className="text-xs" />
                                             <span className="font-medium">Export to CSV</span>
                                         </button>
-                                        <button 
+                                        <button
                                             className="bg-teal-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-teal-700 flex items-center gap-1 text-xs transition-colors duration-150"
                                         >
                                             <FaSyncAlt className="text-xs" />

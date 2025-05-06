@@ -137,6 +137,31 @@ async def search_policies(search_request: SearchRequest):
                 else:
                     # For any other types, convert to string
                     sanitized_result[key] = str(value)
+            
+            # Check if relevance_score is zero and assign a default score based on content match
+            if sanitized_result.get('relevance_score', 0) == 0:
+                search_term_lower = search_request.search_term.lower()
+                title_lower = sanitized_result.get('title', '').lower()
+                summary_lower = sanitized_result.get('summary', '').lower()
+                
+                # Calculate a simple relevance score based on term frequency
+                score = 0.0
+                if search_term_lower in title_lower:
+                    score += 0.5
+                
+                # Check for individual words in the search term
+                for word in search_term_lower.split():
+                    if len(word) > 3:  # Only consider meaningful words
+                        if word in title_lower:
+                            score += 0.3
+                        if word in summary_lower:
+                            score += 0.2
+                
+                # Ensure score is between 0.1 and 0.9
+                score = min(0.9, max(0.1, score))
+                print(f"Calculated fallback relevance score: {score} for {sanitized_result.get('url')}")
+                sanitized_result['relevance_score'] = score
+            
             sanitized_results.append(sanitized_result)
         
         # Return sanitized results

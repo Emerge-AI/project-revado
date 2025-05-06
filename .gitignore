@@ -1,3 +1,6 @@
+#the MASTER ignore
+.gitignore
+
 # Logs
 logs   
 *.log
@@ -26,3 +29,38 @@ dist-ssr
 
 # Environment variables
 .env
+.venv
+
+# Cache
+backend/__pycache__
+
+# Documents
+public/assets/documents/appeal-letter.txt
+public/assets/documents/approval-notice.txt
+public/assets/documents/clinical-notes.txt
+public/assets/documents/denial-notice.txt
+public/assets/documents/medical-records.txt
+public/assets/documents/operative-report.txt
+public/assets/documents/policy-documentation.txt
+public/documents/appeal-letter.txt
+public/documents/approval-notice.txt
+public/documents/clinical-notes.txt
+public/documents/denial-notice.txt
+public/documents/medical-records.txt
+public/documents/operative-report.txt
+public/documents/policy-documentation.txt
+src/assets/documents/appeal-letter-1003.txt
+src/assets/documents/appeal-letter-1004.txt
+src/assets/documents/appeal-letter-1005.txt
+src/assets/documents/appeal-letter-1006.txt
+src/assets/documents/appeal-letter-1007.txt
+src/assets/documents/appeal-letter.txt
+src/assets/documents/approval-notice.txt
+src/assets/documents/clinical-notes.txt
+src/assets/documents/denial-notice.txt
+src/assets/documents/medical-records.txt
+src/assets/documents/operative-report.txt
+src/assets/documents/policy-documentation.txt
+
+# API Health Check logs
+api_health_check_*.json
