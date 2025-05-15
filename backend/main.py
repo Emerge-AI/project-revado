@@ -1,11 +1,14 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Optional, Dict
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 import asyncio
 from backend.scraper import PolicyScraper
 from backend.search import PolicySearcher
+import json
+import os
+from pathlib import Path
 
 app = FastAPI(title="Payer Policy Management API",
              description="API for scraping and managing payer policies")
@@ -48,12 +51,85 @@ class SearchRequest(BaseModel):
     payer_name: Optional[str] = None
     max_results: Optional[int] = 5
 
+# Appeal Letter Generation Models
+class Patient(BaseModel):
+    firstName: str
+    lastName: str
+    dob: str
+    medicaidId: Optional[str] = None
+    medicareId: Optional[str] = None
+
+class Facility(BaseModel):
+    npi: str
+    name: str
+    address: str
+    contact: Optional[str] = None
+
+class TherapySession(BaseModel):
+    discipline: str
+    minutes: int
+
+class Episode(BaseModel):
+    dosFrom: str
+    dosTo: str
+    therapy: List[TherapySession]
+    levelOfCare: Optional[str] = None
+    physician: Optional[str] = None
+
+class Payer(BaseModel):
+    planType: str
+    policySection: Optional[str] = None
+    contactInfo: Optional[str] = None
+
+class Denial(BaseModel):
+    remitDate: str
+    carc: str
+    rarc: str
+    amountDenied: float
+    reasonText: str
+    claimControlNumber: Optional[str] = None
+
+class AppealRepresentative(BaseModel):
+    hasAOR: bool
+    name: Optional[str] = None
+    relationship: Optional[str] = None
+
+class Appeal(BaseModel):
+    level: str
+    deadline: str
+    representative: AppealRepresentative
+
+class Attachment(BaseModel):
+    type: str
+    filename: str
+    description: Optional[str] = None
+
+class AppealPacket(BaseModel):
+    patient: Patient
+    facility: Facility
+    payer: Payer
+    episode: Episode
+    denial: Denial
+    appeal: Appeal
+    attachments: List[Attachment] = []
+    additionalNotes: Optional[str] = None
+
+class AppealLetterResponse(BaseModel):
+    letter_text: str
+    letter_id: str
+    created_date: datetime
+    attachments_info: List[dict] = []
+
 # In-memory storage for policies (replace with database in production)
 policies_db = {}
 
 # Create a mapping of policy IDs to URLs for easier access
 policy_id_to_url = {}
 next_policy_id = 1
+
+# In-memory storage for appeal letters
+appeal_letters_db = {}
+next_appeal_id = 1
 
 @app.on_event("startup")
 async def initialize_db():
@@ -526,6 +602,293 @@ async def debug_search_policies(search_request: SearchRequest):
                 "max_results": search_request.max_results
             }
         }
+
+# Appeal Letter Generation Endpoints
+
+@app.post("/generate-appeal-letter", response_model=AppealLetterResponse)
+async def generate_appeal_letter(packet: AppealPacket):
+    """
+    Generate an appeal letter based on patient, payer, and denial information
+    """
+    try:
+        global next_appeal_id
+        letter_id = f"appeal_{next_appeal_id}"
+        next_appeal_id += 1
+        
+        # Log receipt of appeal packet
+        print(f"Generating appeal letter: {letter_id}")
+        print(f"Patient: {packet.patient.firstName} {packet.patient.lastName}")
+        print(f"Payer: {packet.payer.planType}")
+        
+        # Generate the appeal letter
+        letter_text = generate_appeal_letter_text(packet)
+        
+        # Create response object
+        response = AppealLetterResponse(
+            letter_text=letter_text,
+            letter_id=letter_id,
+            created_date=datetime.now(),
+            attachments_info=[{"filename": attachment.filename, "type": attachment.type} 
+                             for attachment in packet.attachments]
+        )
+        
+        # Save to our in-memory database
+        appeal_letters_db[letter_id] = {
+            "packet": packet.dict(),
+            "response": response.dict(),
+            "created_date": datetime.now()
+        }
+        
+        return response
+    except Exception as e:
+        import traceback
+        error_stack = traceback.format_exc()
+        print(f"Error in generate_appeal_letter: {str(e)}")
+        print(error_stack)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/upload-appeal-attachments/{letter_id}")
+async def upload_appeal_attachments(
+    letter_id: str, 
+    files: List[UploadFile] = File(...),
+    file_types: str = Form(...)
+):
+    """
+    Upload attachment files for an appeal letter
+    """
+    try:
+        if letter_id not in appeal_letters_db:
+            raise HTTPException(status_code=404, detail="Appeal letter not found")
+        
+        # Parse the file_types JSON string
+        file_types_dict = json.loads(file_types)
+        
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path("uploads") / letter_id
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Save uploaded files
+        saved_files = []
+        for file in files:
+            file_path = upload_dir / file.filename
+            
+            # Get file type from the dictionary
+            file_type = file_types_dict.get(file.filename, "unknown")
+            
+            # Write file content
+            with open(file_path, "wb") as f:
+                content = await file.read()
+                f.write(content)
+            
+            # Add to saved files list
+            saved_files.append({
+                "filename": file.filename,
+                "path": str(file_path),
+                "type": file_type,
+                "size": len(content)
+            })
+        
+        # Update appeal record with attachment information
+        appeal_letters_db[letter_id]["attachments"] = saved_files
+        
+        return {"message": f"Successfully uploaded {len(saved_files)} files", "files": saved_files}
+    except Exception as e:
+        import traceback
+        error_stack = traceback.format_exc()
+        print(f"Error in upload_appeal_attachments: {str(e)}")
+        print(error_stack)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/appeal-letter/{letter_id}", response_model=AppealLetterResponse)
+async def get_appeal_letter(letter_id: str):
+    """
+    Retrieve a previously generated appeal letter
+    """
+    if letter_id not in appeal_letters_db:
+        raise HTTPException(status_code=404, detail="Appeal letter not found")
+    
+    # Convert the stored dictionary back to a response object
+    response_dict = appeal_letters_db[letter_id]["response"]
+    response_dict["created_date"] = datetime.fromisoformat(response_dict["created_date"]) \
+        if isinstance(response_dict["created_date"], str) else response_dict["created_date"]
+    
+    return AppealLetterResponse(**response_dict)
+
+@app.get("/appeal-letters", response_model=List[Dict[str, Any]])
+async def list_appeal_letters():
+    """
+    List all generated appeal letters
+    """
+    # Return a list of basic information about each appeal letter
+    appeal_letters = []
+    for letter_id, data in appeal_letters_db.items():
+        packet = data["packet"]
+        appeal_letters.append({
+            "letter_id": letter_id,
+            "patient_name": f"{packet['patient']['firstName']} {packet['patient']['lastName']}",
+            "payer_name": packet["payer"]["planType"],
+            "created_date": data["created_date"],
+            "appeal_level": packet["appeal"]["level"]
+        })
+    
+    return appeal_letters
+
+def generate_appeal_letter_text(packet: AppealPacket) -> str:
+    """
+    Generate the text content of an appeal letter based on the provided packet
+    """
+    # Format the date
+    today = datetime.now().strftime("%B %d, %Y")
+    
+    # Start building the letter
+    letter = f"""
+{today}
+
+{packet.payer.planType}
+{packet.payer.contactInfo or ""}
+
+RE: APPEAL FOR DENIED SKILLED NURSING THERAPY SERVICES
+Patient: {packet.patient.firstName} {packet.patient.lastName}
+DOB: {packet.patient.dob}
+Medicare ID: {packet.patient.medicareId or "N/A"}
+Medicaid ID: {packet.patient.medicaidId or "N/A"}
+Claim Control #: {packet.denial.claimControlNumber or "N/A"}
+CARC: {packet.denial.carc}
+RARC: {packet.denial.rarc}
+Dates of Service: {packet.episode.dosFrom} to {packet.episode.dosTo}
+Amount in Dispute: ${packet.denial.amountDenied:.2f}
+
+To Whom It May Concern:
+
+I am writing to appeal the denial of skilled therapy services for the above-referenced patient at {packet.facility.name}. This appeal is being submitted for the {packet.appeal.level} level of review within the required timeframe. The denial was received on {packet.denial.remitDate} with the following explanation: "{packet.denial.reasonText}".
+
+BACKGROUND:
+The patient received necessary skilled therapy services at {packet.facility.name} from {packet.episode.dosFrom} to {packet.episode.dosTo}. These services included:
+"""
+
+    # Add therapy details
+    for therapy in packet.episode.therapy:
+        letter += f"- {therapy.discipline} for {therapy.minutes} minutes\n"
+    
+    # Add policy information and Jimmo reference
+    letter += f"""
+GROUNDS FOR APPEAL:
+The denial of these medically necessary skilled therapy services contradicts Medicare/Medicaid guidelines that recognize the medical necessity of skilled therapy services for maintaining or preventing decline in a patient's condition. According to {packet.payer.policySection or "the relevant policy guidelines"} and the Jimmo Settlement Agreement (January 2013), skilled therapy services are covered when:
+
+1. The services require the skills of a qualified therapist
+2. The services are reasonable and necessary for the treatment of the patient's illness or injury
+3. The patient requires skilled therapy to maintain function or prevent or slow further deterioration
+
+MEDICAL NECESSITY DOCUMENTATION:
+The attached clinical documentation demonstrates that the services provided were medically necessary as defined by Medicare guidelines and the {packet.payer.planType} policies. The skilled therapy was required to:
+- Maintain the patient's current functional status
+- Prevent deterioration of function
+- Provide specialized skilled interventions that could not be safely or effectively provided by non-skilled personnel
+
+CONCLUSION:
+Based on the above, I request reconsideration of this denial and approval of payment for the services rendered. The patient required and received medically necessary skilled therapy services that meet all coverage criteria.
+
+"""
+
+    # Add signature block based on whether there's a representative
+    if packet.appeal.representative.hasAOR:
+        letter += f"""
+Sincerely,
+
+{packet.appeal.representative.name or "[Representative Name]"}
+Authorized Representative for {packet.patient.firstName} {packet.patient.lastName}
+{packet.appeal.representative.relationship or "Relationship: [relationship]"}
+"""
+    else:
+        letter += f"""
+Sincerely,
+
+[Provider Representative]
+{packet.facility.name}
+{packet.facility.address}
+NPI: {packet.facility.npi}
+"""
+
+    # Add attachments
+    letter += "\nATTACHMENTS:\n"
+    if packet.attachments:
+        for i, attachment in enumerate(packet.attachments, 1):
+            letter += f"{i}. {attachment.filename} - {attachment.description or attachment.type}\n"
+    else:
+        letter += "1. [Denial Letter/Remittance Advice]\n"
+        letter += "2. [Therapy Documentation]\n"
+        letter += "3. [Physician Certification]\n"
+        letter += "4. [Other Supporting Documentation]\n"
+
+    return letter
+
+@app.get("/test-appeal-letter")
+async def test_appeal_letter():
+    """
+    Generate a test appeal letter with sample data
+    """
+    # Create a sample appeal packet
+    test_packet = AppealPacket(
+        patient=Patient(
+            firstName="John",
+            lastName="Smith",
+            dob="1945-05-15",
+            medicareId="123456789A",
+            medicaidId="NY9876543"
+        ),
+        facility=Facility(
+            npi="1234567890",
+            name="Sunshine Skilled Nursing Facility",
+            address="123 Care Lane, New York, NY 10001",
+            contact="Tel: (555) 123-4567"
+        ),
+        payer=Payer(
+            planType="Medicare Advantage",
+            policySection="Chapter 8, Section 30 of the Medicare Benefit Policy Manual",
+            contactInfo="123 Insurance Way, Suite 500, New York, NY 10001"
+        ),
+        episode=Episode(
+            dosFrom="2023-06-01",
+            dosTo="2023-06-30",
+            therapy=[
+                TherapySession(discipline="PT", minutes=750),
+                TherapySession(discipline="OT", minutes=600)
+            ],
+            levelOfCare="PDPM",
+            physician="Dr. Jane Johnson"
+        ),
+        denial=Denial(
+            remitDate="2023-07-15",
+            carc="50",
+            rarc="N290",
+            amountDenied=4250.75,
+            reasonText="These services were not deemed to be medically necessary",
+            claimControlNumber="CL123456789"
+        ),
+        appeal=Appeal(
+            level="redetermination",
+            deadline="2023-11-12",
+            representative=AppealRepresentative(
+                hasAOR=True,
+                name="Sarah Smith",
+                relationship="Daughter"
+            )
+        ),
+        attachments=[
+            Attachment(type="remit_pdf", filename="Denial_071523.pdf", description="Original Denial Letter"),
+            Attachment(type="therapy_notes", filename="PT_Notes.pdf", description="Physical Therapy Documentation"),
+            Attachment(type="physician_cert", filename="Certification.pdf", description="Physician Certification")
+        ],
+        additionalNotes="Patient has comorbidities including diabetes and hypertension that affect therapy needs."
+    )
+    
+    # Generate and return the test letter
+    letter_text = generate_appeal_letter_text(test_packet)
+    
+    return {
+        "letter_text": letter_text,
+        "test_packet": test_packet
+    }
 
 if __name__ == "__main__":
     import uvicorn

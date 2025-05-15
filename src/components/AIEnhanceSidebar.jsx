@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaRobot, FaSpinner, FaCheck, FaFileMedical, FaFileAlt, FaHospital, FaBalanceScale, FaFileContract, FaPhone, FaArrowUp, FaUserMd, FaGavel, FaBriefcase, FaSearch, FaPaperPlane, FaBell, FaCalendarCheck, FaFileSignature, FaInfoCircle, FaFileDownload } from 'react-icons/fa';
+import { FaTimes, FaRobot, FaSpinner, FaCheck, FaFileMedical, FaFileAlt, FaHospital, FaBalanceScale, FaFileContract, FaPhone, FaArrowUp, FaUserMd, FaGavel, FaBriefcase, FaSearch, FaPaperPlane, FaBell, FaCalendarCheck, FaFileSignature, FaInfoCircle, FaFileDownload, FaEye, FaArrowRight } from 'react-icons/fa';
+import DenialActionSelector from './DenialActionSelector';
 
 const ProcessStep = ({ step, isActive, isComplete }) => {
     return (
@@ -560,6 +561,7 @@ const AIEnhanceSidebar = ({ isOpen, onClose, selectedAppeals }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [completedSections, setCompletedSections] = useState([]);
     const [showingSocialEnhancements, setShowingSocialEnhancements] = useState(false);
+    const [isActionSelectorOpen, setIsActionSelectorOpen] = useState(false);
 
     const sections = [
         {
@@ -704,13 +706,14 @@ const AIEnhanceSidebar = ({ isOpen, onClose, selectedAppeals }) => {
             setCurrentStep(0);
             setCompletedSections([]);
             setShowingSocialEnhancements(false);
+            setIsActionSelectorOpen(false);
         }
     }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen) return;
 
-        const stepDuration = 2000; // 2 seconds per step
+        const stepDuration = 2; // 2 seconds per step
         const timer = setInterval(() => {
             setCurrentStep(prev => {
                 if (prev === 2) {
@@ -749,6 +752,14 @@ const AIEnhanceSidebar = ({ isOpen, onClose, selectedAppeals }) => {
         setShowingSocialEnhancements(false);
     };
 
+    const handleReviewClick = () => {
+        setIsActionSelectorOpen(true);
+    };
+
+    const handleActionSelectorClose = () => {
+        setIsActionSelectorOpen(false);
+    };
+
     if (!isOpen) return null;
 
     // Calculate progress based on completed sections and current progress in active section
@@ -765,131 +776,145 @@ const AIEnhanceSidebar = ({ isOpen, onClose, selectedAppeals }) => {
         return completedProgress;
     };
 
-    const progress = Math.min(100, Math.round(calculateProgress()));
+    const progress = Math.min(100, Math.round(calculateProgress())
+    );
 
     return (
-        <div className={`fixed inset-y-0 right-0 w-96 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-50 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-            {/* Header */}
-            <div className="px-6 py-4 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                    <FaRobot className="text-indigo-600 text-xl" />
-                    <h2 className="text-xl font-semibold text-gray-900">
-                        {showingSocialEnhancements ? 'Social Enhancements' : 'AI Enhancement'}
-                    </h2>
-                </div>
-                <div className="flex items-center space-x-2">
-                    {showingSocialEnhancements && (
+        <>
+            <div className={`fixed inset-y-0 right-0 w-96 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-50 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                {/* Header */}
+                <div className="px-6 py-4 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                        <FaRobot className="text-indigo-600 text-xl" />
+                        <h2 className="text-xl font-semibold text-gray-900">
+                            {showingSocialEnhancements ? 'Social Enhancements' : 'AI Enhancement'}
+                        </h2>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        {showingSocialEnhancements && (
+                            <button
+                                onClick={handleBackClick}
+                                className="text-gray-500 hover:text-gray-700 text-sm"
+                            >
+                                Back
+                            </button>
+                        )}
                         <button
-                            onClick={handleBackClick}
-                            className="text-gray-500 hover:text-gray-700 text-sm"
+                            onClick={onClose}
+                            className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-colors"
+                            aria-label="Close"
                         >
-                            Back
+                            <FaTimes className="h-5 w-5" />
                         </button>
-                    )}
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-                        <FaTimes className="h-5 w-5" />
-                    </button>
+                    </div>
                 </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto h-full pb-32">
-                {!showingSocialEnhancements ? (
-                    <>
-                        {/* Progress Bar */}
-                        <div className="mb-6">
-                            <div className="flex justify-between text-sm text-gray-600 mb-2">
-                                <span>Enhancement Progress</span>
-                                <span>{progress}%</span>
-                            </div>
-                            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-indigo-600 rounded-full transition-all duration-300"
-                                    style={{ width: `${progress}%` }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Selected Appeals */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-medium text-gray-700 mb-2">Selected Appeals</h3>
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="text-sm text-gray-600">
-                                    Enhancing {selectedAppeals.size} appeal{selectedAppeals.size > 1 ? 's' : ''}
+                {/* Content */}
+                <div className="p-6 overflow-y-auto h-full pb-32">
+                    {!showingSocialEnhancements ? (
+                        <>
+                            {/* Progress Bar */}
+                            <div className="mb-6">
+                                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>Enhancement Progress</span>
+                                    <span>{progress}%</span>
+                                </div>
+                                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                                        style={{ width: `${progress}%` }}
+                                    />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Enhancement Sections */}
+                            {/* Selected Appeals */}
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium text-gray-700 mb-2">Selected Appeals</h3>
+                                <div className="bg-gray-50 rounded-lg p-3">
+                                    <div className="text-sm text-gray-600">
+                                        Enhancing {selectedAppeals.size} appeal{selectedAppeals.size > 1 ? 's' : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Enhancement Sections */}
+                            <div className="space-y-4">
+                                {sections.map((section, index) => (
+                                    <EnhancementSection
+                                        key={section.title}
+                                        {...section}
+                                        isActive={currentSection === index}
+                                        isComplete={completedSections.includes(index)}
+                                        currentStep={currentStep}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    ) : (
                         <div className="space-y-4">
-                            {sections.map((section, index) => (
-                                <EnhancementSection
-                                    key={section.title}
-                                    {...section}
-                                    isActive={currentSection === index}
-                                    isComplete={completedSections.includes(index)}
-                                    currentStep={currentStep}
+                            <p className="text-sm text-gray-600 mb-6">
+                                Choose from the following social enhancements to further strengthen your appeal:
+                            </p>
+                            {socialEnhancements.map((enhancement) => (
+                                <SocialEnhancementButton
+                                    key={enhancement.title}
+                                    {...enhancement}
+                                    onClick={enhancement.action}
+                                    steps={enhancement.steps}
                                 />
                             ))}
                         </div>
-                    </>
-                ) : (
-                    <div className="space-y-4">
-                        <p className="text-sm text-gray-600 mb-6">
-                            Choose from the following social enhancements to further strengthen your appeal:
-                        </p>
-                        {socialEnhancements.map((enhancement) => (
-                            <SocialEnhancementButton
-                                key={enhancement.title}
-                                {...enhancement}
-                                onClick={enhancement.action}
-                                steps={enhancement.steps}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Footer */}
-            <div className="absolute bottom-0 left-0 right-0 px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <div className="flex justify-between items-center">
-                    {!showingSocialEnhancements ? (
-                        <>
-                            <span className="text-sm text-gray-600">
-                                {isEnhancementComplete ? (
-                                    <span className="text-green-600 font-medium">Enhancement Complete!</span>
-                                ) : (
-                                    'Enhancing appeals...'
-                                )}
-                            </span>
-                            {isEnhancementComplete && (
-                                <div className="flex space-x-3">
-                                    <button
-                                        onClick={handleSocialEnhancementsClick}
-                                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-                                    >
-                                        Social Enhancements
-                                    </button>
-                                    <button
-                                        onClick={onClose}
-                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-                                    >
-                                        Close
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors ml-auto"
-                        >
-                            Done
-                        </button>
                     )}
                 </div>
+
+                {/* Footer */}
+                <div className="absolute bottom-0 left-0 right-0 px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                        {!showingSocialEnhancements ? (
+                            <>
+                                {isEnhancementComplete ? (
+                                    <div className="grid grid-cols-2 w-full gap-4">
+                                        <button
+                                            onClick={handleReviewClick}
+                                            className="h-12 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm font-medium"
+                                        >
+                                            <FaEye className="h-5 w-5" />
+                                            <span className="text-base">Review</span>
+                                        </button>
+                                        <button
+                                            onClick={handleSocialEnhancementsClick}
+                                            className="h-12 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center shadow-sm"
+                                            aria-label="Social Enhancements"
+                                        >
+                                            <FaArrowRight className="h-6 w-6" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span className="text-sm text-gray-600">
+                                        Enhancing appeals...
+                                    </span>
+                                )}
+                            </>
+                        ) : (
+                            <button
+                                onClick={onClose}
+                                className="h-12 px-6 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2 ml-auto font-medium"
+                            >
+                                <FaCheck className="h-4 w-4" />
+                                <span>Done</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+
+            {/* Render the DenialActionSelector */}
+            <DenialActionSelector
+                isOpen={isActionSelectorOpen}
+                onClose={handleActionSelectorClose}
+                denial={selectedAppeals.size > 0 ? { denialId: Array.from(selectedAppeals)[0] } : null}
+            />
+        </>
     );
 };
 

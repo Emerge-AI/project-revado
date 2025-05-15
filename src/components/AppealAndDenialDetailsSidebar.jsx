@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt, FaSave } from 'react-icons/fa';
+import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt, FaSave, FaEye } from 'react-icons/fa';
+import DenialActionSelector from './DenialActionSelector';
 // import { appealMockData } from '../mockData';
 import { medicalRecordSummary, correctedClaimFile, letterOfMedicalNecessity } from '../mockData';
 
@@ -29,6 +30,7 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
     const [isEditing, setIsEditing] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [status, setStatus] = useState(appeal?.status?.main || ''); // Initialize status
+    const [isActionSelectorOpen, setIsActionSelectorOpen] = useState(false);
 
     // Define success probability reasons
     const successProbReasons = [
@@ -216,6 +218,14 @@ Enclosures:
         }
     };
 
+    const handleReviewClick = () => {
+        setIsActionSelectorOpen(true);
+    };
+
+    const handleActionSelectorClose = () => {
+        setIsActionSelectorOpen(false);
+    };
+
     return (
         <>
             {/* Overlay */}
@@ -233,8 +243,12 @@ Enclosures:
                                 {/* Header */}
                                 <div className="px-3 py-1.5 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
                                     <h2 className="text-md font-semibold text-gray-900 text-left">Denial & Appeal Details</h2>
-                                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-                                        <FaTimes className="h-4 w-4" />
+                                    <button
+                                        onClick={handleReviewClick}
+                                        className="px-3 py-1 flex items-center gap-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-md transition-colors"
+                                    >
+                                        <FaEye className="h-4 w-4" />
+                                        <span>Review</span>
                                     </button>
                                 </div>
 
@@ -687,6 +701,13 @@ Enclosures:
                     </div>
                 </div>
             </div>
+
+            {/* Render the DenialActionSelector */}
+            <DenialActionSelector
+                isOpen={isActionSelectorOpen}
+                onClose={handleActionSelectorClose}
+                denial={denial}
+            />
         </>
     );
 }
