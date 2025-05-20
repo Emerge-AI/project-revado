@@ -713,7 +713,7 @@ const AIEnhanceSidebar = ({ isOpen, onClose, selectedAppeals }) => {
     useEffect(() => {
         if (!isOpen) return;
 
-        const stepDuration = 2; // 2 seconds per step
+        const stepDuration = 2000; // 2000 milliseconds per step
         const timer = setInterval(() => {
             setCurrentStep(prev => {
                 if (prev === 2) {
