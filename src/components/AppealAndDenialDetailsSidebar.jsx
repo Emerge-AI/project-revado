@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt, FaSave } from 'react-icons/fa';
-// import { appealMockData } from '../mockData';
-import { medicalRecordSummary, correctedClaimFile, letterOfMedicalNecessity} from '../mockData';
+import { FaTimes, FaClock, FaFileExport, FaEnvelope, FaBell, FaEdit, FaDownload, FaRobot, FaSyncAlt, FaSave, FaSpinner, FaFilePdf, FaHighlighter } from 'react-icons/fa';
+import { PDFDocument, rgb } from 'pdf-lib';
+
+// API Configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const PriorityBadge = ({ priority }) => {
     const colors = {
@@ -28,7 +30,18 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
     const [notes, setNotes] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
-    const [status, setStatus] = useState(appeal?.status?.main || ''); // Initialize status
+    const [status, setStatus] = useState(appeal?.status?.main || '');
+    
+    // New state for API calls
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisResult, setAnalysisResult] = useState(null);
+    const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
+    const [generatedLetter, setGeneratedLetter] = useState(null);
+    const [apiError, setApiError] = useState(null);
+    
+    // New state for PDF highlighting
+    const [isHighlightingPDF, setIsHighlightingPDF] = useState(false);
+    const [highlightedPdfUrl, setHighlightedPdfUrl] = useState(null);
 
     // Define success probability reasons
     const successProbReasons = [
@@ -37,13 +50,34 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
         { reason: 'Following Payer Modifier Rules' }
     ];
 
-    // Update notes whenever the appeal changes
+    // Update notes and clear AI-related state whenever the appeal changes
     useEffect(() => {
         if (appeal) {
-            setNotes(appeal.notes || ''); // Set notes from the appeal
-            setStatus(appeal.status?.main || ''); // Set status from the appeal
+            setNotes(appeal.notes || '');
+            setStatus(appeal.status?.main || '');
         }
-    }, [appeal]); // Dependency array includes appeal
+        
+        // Clear AI-related state when appeal changes
+        setAnalysisResult(null);
+        setGeneratedLetter(null);
+        setApiError(null);
+        setIsAnalyzing(false);
+        setIsGeneratingLetter(false);
+        setHighlightedPdfUrl(null);
+    }, [appeal]);
+
+    // Clear AI-related state when sidebar closes
+    useEffect(() => {
+        if (!isOpen) {
+            setAnalysisResult(null);
+            setGeneratedLetter(null);
+            setApiError(null);
+            setIsAnalyzing(false);
+            setIsGeneratingLetter(false);
+            setIsEditing(false);
+            setHighlightedPdfUrl(null);
+        }
+    }, [isOpen]);
 
     if (!denial) return null;
 
@@ -52,9 +86,8 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
     }
 
     const handleSaveNotes = () => {
-        // Call the updateNotes function passed from the parent
         if (updateNotes && appeal) {
-            updateNotes(appeal.id, notes); // Pass the appeal ID and updated notes
+            updateNotes(appeal.id, notes);
         }
         console.log('Saving notes:', notes);
         setIsEditing(false);
@@ -65,103 +98,375 @@ const AppealsAndDenialDetailsSidebar = ({ denial, appealData, isOpen, onClose, u
         const newStatus = e.target.value;
         setStatus(newStatus);
         if (updateStatus && appeal) {
-            updateStatus(appeal.id, newStatus); // Pass the appeal ID and updated status
+            updateStatus(appeal.id, newStatus);
         }
     };
 
-    const downloadDocs = () => {
-        console.log(appeal)
-        if (appeal && appeal.supportingDocs) {
-            appeal.supportingDocs.forEach(doc => {
-                let blob;
-                if (doc === "Appeal Letter") {
-                    // Create the appeal letter document using the provided template
-                    const letterTemplate = `
-[Your Name]
-Medical Billing Specialist
-Wyandot Memorial Hospital
-885 N Sandusky Ave
-Upper Sandusky, OH 43351
-(419) 294-4991
-email@wyandotmemorial.org
-${new Date().toLocaleString()}
+    // Convert denial data to ERA format for API
+    const convertDenialToERA = (denial) => {
+        return {
+            claim_number: denial.denialId,
+            patient_name: denial.patient.name,
+            service_date: denial.serviceDate,
+            submission_date: denial.denialDate,
+            amount_billed: denial.amount,
+            amount_paid: 0,
+            carc_code: denial.denialReason.split(' ')[0] || '1',
+            carc_description: denial.denialReason,
+            rarc_code: '',
+            remark: denial.rootCause || '',
+            rag_index_path: null
+        };
+    };
 
-${denial.payer} Claims Department & Appeals Department
-PO Box 1459
-Minneapolis, MN 55440-1459
+    // Convert denial/appeal data to SOAP format for API
+    const convertToSOAP = (denial, appeal) => {
+        return {
+            S: `Patient ${denial.patient.name} presented with complaints related to claim ${denial.denialId}. Service provided on ${denial.serviceDate}.`,
+            O: `Clinical findings and examination results for claim ${denial.denialId}. Payer: ${denial.payer}. Denial reason: ${denial.denialReason}.`,
+            A: `Assessment: ${denial.rootCause || 'Medical necessity established based on clinical presentation and examination findings.'}`,
+            P: `Treatment plan executed as documented. Appeal submitted for proper reimbursement of medically necessary services.`,
+            billing_note: appeal?.notes || denial.rootCause || ''
+        };
+    };
 
-Re: Appeal for Denied Medical Claim
-Patient Name: ${denial.patient.name}
-Date of Service: ${denial.serviceDate}
-Claim Number: ${denial.denialId}
-Policy Number: ${denial.patient.mrn}
-
-Dear ${denial.payer} Claims/Appeals Department,
-
-I am writing to formally appeal the denial of the medical claim for ${denial.patient.name} for services rendered on ${denial.serviceDate}. As a medical billing specialist representing [Your Facility/Organization Name], I have reviewed the denial reason provided and believe this decision was made in error. I respectfully request a reconsideration of this claim.
-
-Reason for Denial: [State the reason for denial as provided by the insurance company, e.g., "lack of medical necessity," "coding error," "missing information," etc.]
-
-Grounds for Appeal:
-
-Medical Necessity: The services provided were medically necessary for the diagnosis and treatment of [Patient's Condition]. Attached is supporting documentation, including the patient's medical records, physician notes, and test results, which demonstrate the necessity of the treatment.
-
-Coding Accuracy: The claim was submitted with the appropriate CPT and ICD-10 codes ([list codes if applicable]) that accurately reflect the services rendered. If there was a coding error, we have reviewed and corrected the claim accordingly.
-
-Authorization/Pre-Certification: If prior authorization was required, we have confirmed that it was obtained on [Date] (see attached authorization confirmation).
-
-Policy Coverage: The services rendered are covered under the patient's policy as outlined in their benefits summary.
-
-Supporting Documentation:
-To assist in your review, I have included the following documents:
-
-- Patient's medical records and physician notes
-- Itemized billing statement
-- Explanation of Benefits (EOB)
-- Prior authorization confirmation (if applicable)
-- Any additional supporting documentation
-
-I kindly request a thorough review of this appeal and a prompt response. If additional information is required, please do not hesitate to contact me at [Your Phone Number] or [Your Email Address].
-
-Thank you for your attention to this matter. I look forward to resolving this issue and ensuring that ${denial.patient.name} receives the coverage they are entitled to under their policy.
-
-Sincerely,
-[Your Full Name]
-Medical Billing Specialist
-[Your Facility/Organization Name]
-
-Enclosures:
-- ${appeal.supportingDocs.filter(d => d !== "Appeal Letter").join(', ')}
-                    `;
-                    blob = new Blob([letterTemplate], { type: 'text/plain' });
-                } else if (doc.toLowerCase() === "medical record summary") {
-                    blob = new Blob([medicalRecordSummary], { type: 'text/plain' });
-                } else if(doc.toLowerCase() === "corrected claim file") {
-                    blob = new Blob([correctedClaimFile], { type: 'text/plain' });
-                } else if(doc.toLowerCase() === "letter of medical necessity") {
-                    blob = new Blob([letterOfMedicalNecessity], { type: 'text/plain' });
-                } else {
-                    // Create a generic document for other types
-                    blob = new Blob([`This is a fake document for ${doc}`], { type: 'text/plain' });
+    // Function to create highlighted PDF
+    const createHighlightedPDF = async (evidenceData) => {
+        try {
+            setIsHighlightingPDF(true);
+            
+            // Load the original PDF (you'll need to have this file accessible)
+            const pdfPath = '/OHIO_MEDICAID.pdf'; // Adjust path as needed
+            const existingPdfBytes = await fetch(pdfPath).then(res => res.arrayBuffer());
+            
+            // Load the PDF document
+            const pdfDoc = await PDFDocument.load(existingPdfBytes);
+            const pages = pdfDoc.getPages();
+            
+            // Extract evidence details from analysis result
+            const evidenceDetails = evidenceData?.evidence_validation?.evidence_details || {};
+            
+            // Process each piece of evidence
+            for (const [evidenceId, details] of Object.entries(evidenceDetails)) {
+                const pageNum = details.page;
+                const startPos = details.start_position;
+                const endPos = details.end_position;
+                const fullText = details.full_text;
+                
+                if (pageNum && pageNum <= pages.length) {
+                    const page = pages[pageNum - 1]; // Convert to 0-based index
+                    const { width, height } = page.getSize();
+                    
+                    // For demonstration, we'll add a highlight annotation
+                    // Note: This is a simplified approach. In a real implementation,
+                    // you'd need to map text positions to PDF coordinates more precisely
+                    
+                    // Add a semi-transparent yellow rectangle as highlight
+                    // You would need to calculate the actual coordinates based on text position
+                    const highlightHeight = 20; // Approximate line height
+                    const highlightY = height * 0.7; // Approximate position (you'd calculate this from text position)
+                    
+                    page.drawRectangle({
+                        x: 50,
+                        y: highlightY,
+                        width: width - 100,
+                        height: highlightHeight,
+                        color: rgb(1, 1, 0), // Yellow
+                        opacity: 0.3
+                    });
+                    
+                    // Add evidence ID annotation
+                    page.drawText(`Evidence: ${evidenceId}`, {
+                        x: 50,
+                        y: highlightY + highlightHeight + 5,
+                        size: 8,
+                        color: rgb(1, 0, 0) // Red text
+                    });
                 }
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${doc}.txt`; // Set the file name
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url); // Clean up the URL object
+            }
+            
+            // Add a summary page with all evidence
+            const summaryPage = pdfDoc.addPage();
+            const { width, height } = summaryPage.getSize();
+            
+            summaryPage.drawText('EVIDENCE SUMMARY', {
+                x: 50,
+                y: height - 50,
+                size: 16,
+                color: rgb(0, 0, 0)
             });
+            
+            let yPosition = height - 80;
+            
+            for (const [evidenceId, details] of Object.entries(evidenceDetails)) {
+                const text = `Evidence ID: ${evidenceId}\nPage: ${details.page || 'Unknown'}\nRelevance: ${details.relevance || 'Unknown'}\nText: ${(details.full_text || '').substring(0, 200)}...`;
+                
+                summaryPage.drawText(text, {
+                    x: 50,
+                    y: yPosition,
+                    size: 10,
+                    color: rgb(0, 0, 0),
+                    maxWidth: width - 100
+                });
+                
+                yPosition -= 120;
+                
+                if (yPosition < 50) break; // Prevent overflow
+            }
+            
+            // Save the PDF
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            
+            setHighlightedPdfUrl(url);
+            return url;
+            
+        } catch (error) {
+            console.error('Error creating highlighted PDF:', error);
+            throw error;
+        } finally {
+            setIsHighlightingPDF(false);
+        }
+    };
+
+    // API call to analyze claim
+    const runAIAnalysis = async () => {
+        setIsAnalyzing(true);
+        setApiError(null);
+        
+        try {
+            const eraData = convertDenialToERA(denial);
+            const soapData = convertToSOAP(denial, appeal);
+
+            const response = await fetch(`${API_BASE_URL}/analyze-claim`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    era_input: eraData,
+                    soap_input: soapData
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Analysis failed: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            setAnalysisResult(result);
+            
+            console.log('Analysis complete:', result);
+            
+            // Create highlighted PDF if evidence was found
+            if (result.evidence_ids && result.evidence_ids.length > 0) {
+                try {
+                    await createHighlightedPDF(result);
+                } catch (pdfError) {
+                    console.warn('Could not create highlighted PDF:', pdfError);
+                }
+            }
+            
+            // Show success message
+            alert(`Analysis Complete!\n\nResult: ${result.final_determination}\nConfidence: ${(result.confidence * 100).toFixed(1)}%\n\nTools Used: ${result.tools_used.join(', ')}\n\n${result.evidence_ids?.length ? `Evidence found: ${result.evidence_ids.length} items` : 'No evidence found'}`);
+            
+        } catch (error) {
+            console.error('Analysis failed:', error);
+            setApiError(`Analysis failed: ${error.message}`);
+            alert(`Analysis failed: ${error.message}`);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    // API call to generate letter
+    const generateAppealLetter = async () => {
+        if (!analysisResult) {
+            alert('Please run AI Analysis first to generate a letter.');
+            return;
+        }
+
+        setIsGeneratingLetter(true);
+        setApiError(null);
+
+        try {
+            const eraData = convertDenialToERA(denial);
+            const soapData = convertToSOAP(denial, appeal);
+
+            const letterRequest = {
+                era: eraData,
+                soap: soapData,
+                analysis_result: analysisResult,
+                provider_name: "Healthcare Provider",
+                provider_address: "Provider Address",
+                insurance_company: denial.payer,
+                insurance_address: "Insurance Company Address",
+                contact_person: "Appeals Department"
+            };
+
+            const response = await fetch(`${API_BASE_URL}/generate-letter`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(letterRequest)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Letter generation failed: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            setGeneratedLetter(result);
+            
+            console.log('Letter generated:', result);
+            
+            // Show success message
+            alert(`Letter Generated!\n\nType: ${result.letter_type.replace('_', ' ').toUpperCase()}\nConfidence: ${(result.confidence * 100).toFixed(1)}%\n\nRecommendations: ${result.recommendations.length}`);
+            
+        } catch (error) {
+            console.error('Letter generation failed:', error);
+            setApiError(`Letter generation failed: ${error.message}`);
+            alert(`Letter generation failed: ${error.message}`);
+        } finally {
+            setIsGeneratingLetter(false);
+        }
+    };
+
+    // Enhanced download function with PDF highlighting
+    const downloadDocs = async () => {
+        if (!appeal?.supportingDocs && !generatedLetter && !analysisResult) {
+            alert('No documents available to download.');
+            return;
+        }
+
+        const downloads = [];
+
+        // Download generated letter if available
+        if (generatedLetter) {
+            const letterBlob = new Blob([generatedLetter.content], { type: 'text/plain' });
+            downloads.push({
+                blob: letterBlob,
+                filename: `${generatedLetter.letter_type}_${denial.denialId}.txt`,
+                description: 'Generated Appeal Letter'
+            });
+        }
+
+        // Download analysis result if available
+        if (analysisResult) {
+            const analysisBlob = new Blob([JSON.stringify(analysisResult, null, 2)], { type: 'application/json' });
+            downloads.push({
+                blob: analysisBlob,
+                filename: `analysis_result_${denial.denialId}.json`,
+                description: 'AI Analysis Results'
+            });
+        }
+
+        // Download highlighted PDF if available
+        if (highlightedPdfUrl) {
+            try {
+                const response = await fetch(highlightedPdfUrl);
+                const pdfBlob = await response.blob();
+                downloads.push({
+                    blob: pdfBlob,
+                    filename: `OHIO_MEDICAID_highlighted_${denial.denialId}.pdf`,
+                    description: 'Highlighted PDF with Evidence'
+                });
+            } catch (error) {
+                console.error('Error downloading highlighted PDF:', error);
+            }
+        } else if (analysisResult?.evidence_ids?.length > 0) {
+            // Try to create and download highlighted PDF
+            try {
+                setIsHighlightingPDF(true);
+                const pdfUrl = await createHighlightedPDF(analysisResult);
+                const response = await fetch(pdfUrl);
+                const pdfBlob = await response.blob();
+                downloads.push({
+                    blob: pdfBlob,
+                    filename: `OHIO_MEDICAID_highlighted_${denial.denialId}.pdf`,
+                    description: 'Highlighted PDF with Evidence'
+                });
+            } catch (error) {
+                console.error('Error creating highlighted PDF:', error);
+                // Fallback: download original PDF
+                try {
+                    const originalResponse = await fetch('/OHIO_MEDICAID.pdf');
+                    const originalBlob = await originalResponse.blob();
+                    downloads.push({
+                        blob: originalBlob,
+                        filename: `OHIO_MEDICAID_original_${denial.denialId}.pdf`,
+                        description: 'Original PDF (highlighting failed)'
+                    });
+                } catch (originalError) {
+                    console.error('Error downloading original PDF:', originalError);
+                }
+            } finally {
+                setIsHighlightingPDF(false);
+            }
+        }
+
+        // Download evidence summary if available
+        if (analysisResult?.evidence_validation?.evidence_details) {
+            const evidenceDetails = analysisResult.evidence_validation.evidence_details;
+            let evidenceSummary = `EVIDENCE SUMMARY FOR CLAIM ${denial.denialId}\n`;
+            evidenceSummary += `Generated: ${new Date().toISOString()}\n\n`;
+            
+            for (const [evidenceId, details] of Object.entries(evidenceDetails)) {
+                evidenceSummary += `EVIDENCE ID: ${evidenceId}\n`;
+                evidenceSummary += `Source: ${details.source || 'Unknown'}\n`;
+                evidenceSummary += `Relevance: ${details.relevance || 'Unknown'}\n`;
+                evidenceSummary += `Page: ${details.page || 'Unknown'}\n`;
+                evidenceSummary += `Position: ${details.start_position || 'Unknown'}-${details.end_position || 'Unknown'}\n`;
+                evidenceSummary += `Content Type: ${details.content_type || 'Unknown'}\n`;
+                evidenceSummary += `Full Text:\n${details.full_text || 'No text available'}\n`;
+                evidenceSummary += `\n${'='.repeat(80)}\n\n`;
+            }
+            
+            const evidenceBlob = new Blob([evidenceSummary], { type: 'text/plain' });
+            downloads.push({
+                blob: evidenceBlob,
+                filename: `evidence_summary_${denial.denialId}.txt`,
+                description: 'Evidence Summary with Full Text'
+            });
+        }
+
+        // Download supporting docs if they exist
+        if (appeal?.supportingDocs) {
+            appeal.supportingDocs.forEach(doc => {
+                if (doc !== "Appeal Letter") {
+                    const blob = new Blob([`This is a document for ${doc} - Claim ${denial.denialId}`], { type: 'text/plain' });
+                    downloads.push({
+                        blob: blob,
+                        filename: `${doc}_${denial.denialId}.txt`,
+                        description: doc
+                    });
+                }
+            });
+        }
+
+        // Execute all downloads
+        for (const download of downloads) {
+            const url = URL.createObjectURL(download.blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = download.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        if (downloads.length > 0) {
+            alert(`Downloaded ${downloads.length} files:\n${downloads.map(d => `• ${d.description}`).join('\n')}`);
         }
     };
 
     const exportToCSV = () => {
         if (appeal && denial) {
             const csvRows = [];
-            const headers = [
-                'Field', 'Value'
-            ];
+            const headers = ['Field', 'Value'];
             csvRows.push(headers.join(','));
 
             // Add relevant appeal data to CSV
@@ -196,11 +501,40 @@ Enclosures:
                 { field: 'Appeal Manager', value: denial.appealManager },
             ];
 
+            // Add AI analysis data if available
+            if (analysisResult) {
+                const aiData = [
+                    { field: 'AI Analysis Result', value: analysisResult.final_determination },
+                    { field: 'AI Confidence', value: `${(analysisResult.confidence * 100).toFixed(1)}%` },
+                    { field: 'AI Tools Used', value: analysisResult.tools_used.join(', ') },
+                    { field: 'AI Model Used', value: analysisResult.model_used },
+                    { field: 'AI Processing Time', value: `${analysisResult.processing_time.toFixed(2)}s` },
+                    { field: 'AI Tokens Used', value: analysisResult.tokens_used.toString() },
+                    { field: 'Evidence Count', value: (analysisResult.evidence_ids || []).length.toString() },
+                    { field: 'Evidence IDs', value: (analysisResult.evidence_ids || []).join(', ') }
+                ];
+                appealData.push(...aiData);
+            }
+
+            // Add letter generation data if available
+            if (generatedLetter) {
+                const letterData = [
+                    { field: 'Letter Type', value: generatedLetter.letter_type },
+                    { field: 'Letter Confidence', value: `${(generatedLetter.confidence * 100).toFixed(1)}%` },
+                    { field: 'Letter Model Used', value: generatedLetter.model_used },
+                    { field: 'Letter Processing Time', value: `${generatedLetter.processing_time.toFixed(2)}s` },
+                    { field: 'Letter Tokens Used', value: generatedLetter.tokens_used.toString() },
+                    { field: 'Letter Recommendations', value: generatedLetter.recommendations.join('; ') }
+                ];
+                appealData.push(...letterData);
+            }
+
             // Combine both appeal and denial data
             const combinedData = [...appealData, ...denialData];
 
             combinedData.forEach(row => {
-                csvRows.push(`${row.field},${row.value}`);
+                const escapedValue = row.value.toString().includes(',') ? `"${row.value}"` : row.value;
+                csvRows.push(`${row.field},${escapedValue}`);
             });
 
             const csvString = csvRows.join('\n');
@@ -208,11 +542,11 @@ Enclosures:
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Appeal_${appeal.id}.csv`; // Set the file name
+            a.download = `Appeal_${appeal?.id || denial.denialId}_with_AI_and_Evidence.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url); // Clean up the URL object
+            URL.revokeObjectURL(url);
         }
     };
 
@@ -237,6 +571,68 @@ Enclosures:
                                         <FaTimes className="h-4 w-4" />
                                     </button>
                                 </div>
+
+                                {/* API Error Display */}
+                                {apiError && (
+                                    <div className="px-3 py-2 bg-red-50 border-b border-red-200">
+                                        <div className="text-sm text-red-700">
+                                            <strong>Error:</strong> {apiError}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* AI Analysis Results Display */}
+                                {analysisResult && (
+                                    <div className="px-3 py-2 bg-blue-50 border-b border-blue-200">
+                                        <div className="text-sm text-blue-700">
+                                            <strong>AI Analysis:</strong> {analysisResult.final_determination} 
+                                            <span className="ml-2">
+                                                (Confidence: {(analysisResult.confidence * 100).toFixed(1)}%)
+                                            </span>
+                                            {analysisResult.evidence_ids && analysisResult.evidence_ids.length > 0 && (
+                                                <span className="ml-2 text-xs">
+                                                    📋 {analysisResult.evidence_ids.length} evidence items found
+                                                </span>
+                                            )}
+                                            {analysisResult.analyzer_result && (
+                                                <div className="mt-1 text-xs">
+                                                    <strong>Analysis Quality:</strong> {analysisResult.analyzer_result.reasoning_quality}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Generated Letter Results Display */}
+                                {generatedLetter && (
+                                    <div className="px-3 py-2 bg-green-50 border-b border-green-200">
+                                        <div className="text-sm text-green-700">
+                                            <strong>Letter Generated:</strong> {generatedLetter.letter_type.replace('_', ' ').toUpperCase()} 
+                                            <span className="ml-2">
+                                                ({generatedLetter.recommendations.length} recommendations)
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* PDF Highlighting Status */}
+                                {(isHighlightingPDF || highlightedPdfUrl) && (
+                                    <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-200">
+                                        <div className="text-sm text-yellow-700 flex items-center gap-2">
+                                            {isHighlightingPDF ? (
+                                                <>
+                                                    <FaSpinner className="animate-spin" />
+                                                    <span>Creating highlighted PDF...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FaHighlighter />
+                                                    <span>PDF with highlighted evidence ready for download</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
     
                                 {/* Content */}
                                 <div className="flex-1 p-2 overflow-y-auto">
@@ -528,14 +924,6 @@ Enclosures:
                                                 </div>
                                             </div>
     
-                                            {/* Cost of Appeal */}
-                                            {/* <div className="bg-white rounded-lg border border-gray-200 p-1.5">
-                                                <div className="text-left">
-                                                    <label className="text-xs font-medium text-gray-500 block">Cost of Appeal</label>
-                                                    <p className="text-xs text-gray-900">${appeal.costOfAppeal.toLocaleString()}</p>
-                                                </div>
-                                            </div> */}
-    
                                             {/* Supporting Docs */}
                                             <div className="bg-white rounded-lg border border-gray-200 p-1.5">
                                                 <div className="text-left">
@@ -615,35 +1003,53 @@ Enclosures:
                                     </div>
                                 </div>
     
-                                {/* Footer */}
+                                {/* Enhanced Footer with PDF highlighting */}
                                 <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-200">
                                     <div className="flex justify-start gap-1 flex-wrap">
-                                        {!appeal && (
-                                            <button
-                                                className="bg-indigo-600 text-white px-2 py-0.5 rounded-full shadow-lg hover:bg-indigo-700 flex gap-1 items-center text-xs transition-colors duration-150"
-                                                onClick={() => console.log('Create Appeal')}
-                                            >
-                                                <FaRobot className="text-lg" />
-                                                <span className="font-medium">Create Appeal</span>
-                                            </button>
-                                        )}
                                         {/* Run AI Analysis */}
                                         <button
-                                            className="bg-purple-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-purple-700 flex items-center gap-1 text-xs transition-colors duration-150"
-                                            onClick={() => console.log('Run AI Analysis')}
+                                            className={`px-2 py-0.5 rounded-full shadow hover:bg-purple-700 flex items-center gap-1 text-xs transition-colors duration-150 ${
+                                                isAnalyzing 
+                                                    ? 'bg-purple-400 text-white cursor-not-allowed' 
+                                                    : 'bg-purple-600 text-white'
+                                            }`}
+                                            onClick={runAIAnalysis}
+                                            disabled={isAnalyzing}
                                         >
-                                            <FaRobot className="text-xs" />
-                                            <span>Run AI Analysis</span>
+                                            {isAnalyzing ? <FaSpinner className="text-xs animate-spin" /> : <FaRobot className="text-xs" />}
+                                            <span>{isAnalyzing ? 'Analyzing...' : 'Run AI Analysis'}</span>
                                         </button>
-                                        {!appeal && (
-                                            <button
-                                                className="bg-indigo-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-indigo-700 flex items-center gap-1 text-xs transition-colors duration-150"
-                                                onClick={() => console.log('Batch AI Appeal')}
-                                            >
-                                                <FaRobot className="text-xs" />
-                                                <span>Create Appeal</span>
-                                            </button>
-                                        )}
+
+                                        {/* Generate Letter */}
+                                        <button
+                                            className={`px-2 py-0.5 rounded-full shadow hover:bg-indigo-700 flex items-center gap-1 text-xs transition-colors duration-150 ${
+                                                isGeneratingLetter || !analysisResult
+                                                    ? 'bg-indigo-400 text-white cursor-not-allowed' 
+                                                    : 'bg-indigo-600 text-white'
+                                            }`}
+                                            onClick={generateAppealLetter}
+                                            disabled={isGeneratingLetter || !analysisResult}
+                                            title={!analysisResult ? 'Run AI Analysis first' : ''}
+                                        >
+                                            {isGeneratingLetter ? <FaSpinner className="text-xs animate-spin" /> : <FaRobot className="text-xs" />}
+                                            <span>{isGeneratingLetter ? 'Generating...' : 'Generate Letter'}</span>
+                                        </button>
+
+                                        {/* Highlight PDF (new button) */}
+                                        <button
+                                            className={`px-2 py-0.5 rounded-full shadow hover:bg-yellow-700 flex items-center gap-1 text-xs transition-colors duration-150 ${
+                                                isHighlightingPDF || !analysisResult?.evidence_ids?.length
+                                                    ? 'bg-yellow-400 text-white cursor-not-allowed' 
+                                                    : 'bg-yellow-600 text-white'
+                                            }`}
+                                            onClick={() => createHighlightedPDF(analysisResult)}
+                                            disabled={isHighlightingPDF || !analysisResult?.evidence_ids?.length}
+                                            title={!analysisResult?.evidence_ids?.length ? 'Need evidence from AI Analysis first' : 'Create highlighted PDF'}
+                                        >
+                                            {isHighlightingPDF ? <FaSpinner className="text-xs animate-spin" /> : <FaHighlighter className="text-xs" />}
+                                            <span>{isHighlightingPDF ? 'Highlighting...' : 'Highlight PDF'}</span>
+                                        </button>
+
                                         {/* Contact Payer */}
                                         <button
                                             className="bg-teal-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-teal-700 flex items-center gap-1 text-xs transition-colors duration-150"
@@ -652,6 +1058,7 @@ Enclosures:
                                             <FaEnvelope className="text-xs" />
                                             <span>Contact Payer</span>
                                         </button>
+                                        
                                         {/* Send Reminder */}
                                         <button
                                             className="bg-orange-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-orange-700 flex items-center gap-1 text-xs transition-colors duration-150"
@@ -660,22 +1067,31 @@ Enclosures:
                                             <FaBell className="text-xs" />
                                             <span>Send Reminder</span>
                                         </button>
-                                        {/* Download Appeal Package */}
+                                        
+                                        {/* Enhanced Download Documents */}
                                         <button
-                                            className="bg-gray-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-gray-700 flex items-center gap-1 text-xs transition-colors duration-150"
+                                            className={`px-2 py-0.5 rounded-full shadow hover:bg-gray-700 flex items-center gap-1 text-xs transition-colors duration-150 ${
+                                                !generatedLetter && !analysisResult
+                                                    ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                                    : 'bg-gray-600 text-white'
+                                            }`}
                                             onClick={downloadDocs}
+                                            disabled={!generatedLetter && !analysisResult}
+                                            title={!generatedLetter && !analysisResult ? 'Generate letter or run analysis first' : 'Download all documents including highlighted PDF'}
                                         >
-                                            <FaDownload className="text-xs" />
-                                            <span>Download Docs</span>
+                                            <FaFilePdf className="text-xs" />
+                                            <span>Download All</span>
                                         </button>
+                                        
                                         {/* Export to CSV */}
                                         <button 
                                             className="bg-green-600 text-white px-2 py-0.5 rounded-full shadow-lg hover:bg-green-700 flex items-center gap-1 text-xs transition-colors duration-150"
                                             onClick={exportToCSV}
                                         >
                                             <FaFileExport className="text-xs" />
-                                            <span className="font-medium">Export to CSV</span>
+                                            <span className="font-medium">Export CSV</span>
                                         </button>
+                                        
                                         <button 
                                             className="bg-teal-600 text-white px-2 py-0.5 rounded-full shadow hover:bg-teal-700 flex items-center gap-1 text-xs transition-colors duration-150"
                                         >
